@@ -1,0 +1,453 @@
+<title>Blepo download</title>
+<center><h1>Blepo Download</h1></center>
+
+<center>Contents:  
+<a href="#downloading">Downloading the library</a> -- 
+<a href="#setting up">Setting up your system</a> -- 
+<a href="#VS2010">Getting started with Visual Studio 2008/2010</a> -- 
+<a href="#VC60">Getting started with Visual C++ 6.0</a>
+</center>
+
+<a name="downloading">
+<h2>Downloading the library</h2>
+</a>
+
+<p>Latest Blepo version available for download:</p>
+<ul>
+<li><i><a href="blepo_0.6.9.zip">Version 0.6.9 (18 Aug 2013)</a></i> (22 MB)
+</ul>
+
+<a href="history.html">Previous versions</a>
+
+<a name="setting up">
+<h2>Setting up your system</h2>
+</a>
+
+<p>Once you have downloaded the code and unzipped it, you will need to do the 
+following to set up your system. </p>
+<ol>
+<li>The DLLs in the <tt>external/bin</tt> directory must be in your path.  
+<ul>
+  <li>Usually, this is done (on WindowsXP 
+/ Windows7) by selecting 
+<tt>Start Menu -> Control Panel -> System -> Advanced -> Environment Variables -> Path -> Edit</tt>.  In the edit box, append the 
+full path to that directory, preceded by a semicolon <i>with no extra spaces</i>, for example, "<tt>;c:/blepo/external/bin</tt>" (without the quotes).  
+(You will probably have to reboot your system for this to take effect.)</li>
+  <li>Alternatively, if you do not have the ability to change your environment 
+  variables for some reason, then simply copy the DLLs to the same directory as 
+  your executable
+  </ul>
+  <li>The NASM assembler, which is used to compile the assembly code, must be in your executable path.  The name of this file is 
+<tt>nasm.exe</tt> and it resides in the <tt>external/bin</tt> directory.  For some inexplicable reason the  step 
+  above to modify your environment path does not 
+solve this problem for VS6.0, so you have to copy the <tt>nasm.exe</tt> file to an existing directory on your path, such as <tt>
+  c:/windows/system32 and/or</tt> <tt>
+  c:/windows/SysWOW64</tt>.&nbsp; </p>
+</ol>
+</ul>
+
+<p>
+In addition, if you wish to capture images from a camera (e.g., USB webcam,
+Data Translation DT3120, or IEEE 1394), you will need to install the appropriate driver(s).
+For IEEE1394, you need to set it to use the CMU driver by following the instructions
+in <tt>Capture/CaptureIEEE1394.h</tt>.  If you have any trouble, see the help in 
+<tt>blepo/external/doc/IEEE1394</tt>.  After installing the driver, you may test 
+your camera using Blepo code or the CMU test application in 
+<tt>blepo/external/bin/1394CameraDemo.exe</tt>
+
+<a name="VS2010">
+<h2>Getting started with Visual Studio 2008/2010</h2>
+</a>
+
+<p>Once you have performed these steps,  open <tt>demo/Demo.sln</tt> in Visual 
+Studio, compile the code, and run. This solution is a good starting point for learning how to build an executable 
+using the library.
+
+<p>
+To create a new project to use Blepo, 
+<ol>
+<li>Create a project with <tt>File -> New -> Project</tt>.  Enter the name of the project, then
+	<ul>
+	<li>Either <tt>Visual C++ -> Win32 Console Application</tt> (click <tt>Application settings</tt> and check <tt>MFC</tt>), or
+	<li><tt>Visual C++ -> MFC Application </tt> (click <tt>Application Type</tt> and select <tt>Dialog based</tt>, 
+    which is the simplest choice)
+	</ul>
+<li>Make the project use the Blepo library.
+	<ul>
+	<li>In the Solution Explorer, right click on <tt>
+    'Solution' -&gt; Add -&gt; Existing project</tt>.&nbsp; Select <tt>blepo/src/blepo.vcproj</tt> (VS2008) or <tt>blepo/src/blepo.vcxproj</tt> (VS2010)
+	<li>Make your project dependent upon (and link with) Blepo 
+    <ul>
+    <li>VS2008:  <tt>Project -> Dependencies</tt>, check the box next to <tt>Blepo</tt>
+          <br>(<i>Note:  In VS2008, project dependencies affect build order and linking.</i>)
+    <li>VS2010:  <tt>Project -> Properties -> Common Properties -> Frameworks and References -> Add New Reference</tt>.  Select Blepo.  
+          <br>(<i>Note:  In VS2010, project dependencies only affect build order.  Adding a reference sets the dependency and enforces linking also. 
+          See <a href="http://stackoverflow.com/questions/3795567/visual-studio-2010-not-autolinking-static-libraries-from-projects-that-are-depend">here.</a></i>)
+    </ul>
+	</ul>
+<li>Change the project properties <br>
+(Be sure that you are changing the properties of <i>your</i> project, not of Blepo:&nbsp; 
+look in the title bar of the <tt>Property Pages</tt> dialog)<br>
+(Also, be sure that your changes affect both Debug and Release modes:&nbsp; To 
+do this, 
+<tt>Configuration -&gt; All Configurations</tt>):
+<ul>
+<li><tt>Project -&gt; Properties -&gt; Configuration Properties 
+-&gt; General -&gt; Character set.&nbsp; </tt>Set to <tt>&quot;Use 
+Multi-Byte Character Set&quot;</tt>&nbsp; (This will remove the compilation errors 
+related to character strings.)</li>
+<li><tt>Project -> Properties -> Configuration
+properties -> Linker -> Input -> Ignore specific library.</tt>&nbsp; Add <tt>LIBCMT.lib</tt>&nbsp;
+(In VS2010, it is called <tt>Ignore specific default libraries</tt>)  (While this appears not to be necessary for console-based applications, it is for MFC applications.)
+</li>
+</ul>
+<li>Include the Blepo header file (<tt>#include "blepo.h"</tt>).  For the compiler to find this file, you will need to do
+one of the following:
+	<ul>
+	<li>Add the <tt>blepo/src</tt> path to your project include path (<tt>Project -> 
+    Properties -> C/C++ -> General -&gt; Additional include directories</tt>), or
+	<li>add the path to your VC++ list of include directories (<tt>Tools -</tt><font face="Courier New"><tt>> Options -> 
+    Projects and solutions -&gt; VC++ Directories -> Show directories for 'Include </tt>
+    files'</font>), or
+	<li>put the path into the <tt>#include</tt> statement.
+	</ul>
+<li>Now build the project and run.
+	<ul>
+	<li>If you're using a Win32 Console application, then add your code in the <tt>else</tt> clause of <tt>_tmain</tt>.  <br>(Do not forget to call <tt>EventLoop()</tt>, as mentioned in the Blepo tutorial.)
+	<li>If you're using an MFC Application, then 
+		<ol>
+		<li>doubleclick <tt>Resource files -> *.rc</tt>, then doubleclick <tt>Dialog -> IDD_*_DIALOG</tt>, where <tt>*</tt> is the name of your project, to see the dialog
+		<li>Hover over the <tt>Toolbox</tt> on the right. 	Click <tt>Button</tt>, then click inside the dialog to place a new button in the dialog
+		<li>Click then right-click the button, <tt>Add event handler</tt>, then click 'Add and edit' and change the 'Function handler name' if you want.
+		<li>Click 'OK'.  Now, in the <tt>.cpp</tt> file insert Blepo code in the function.  When you run the program and click the button, this code will be called.  
+		<li>Note that you will not be able to use <tt>printf</tt>,
+		so instead pass a string to <tt>AfxMessageBox</tt>.  Use <tt>CString::Format</tt> if you need to format a string.  Example:
+			<blockquote>
+			CString str;<br>
+      int x;<br>
+			str.Format("variable x = %d", x);<br>
+			AfxMessageBox(str);
+			</blockquote>
+			Of course, for viewing variables the debugger is much more efficient.
+		</ol>
+	</ul>
+</ol>
+
+<p><b>Some common errors in VS2008/2010:</b></p>
+
+<ol>
+<li>Errors with project:<ol>
+<li>'nasmw.exe' is not recognized as an internal or external command, operable 
+program or batch file.
+  <ul>
+  <li>Did you remember to copy nasmw.exe to <tt>c:/windows/system32 and/or</tt> <tt>
+  c:/windows/SysWOW64</tt>?  Of course, it should also work if you add <tt>c:/blepo/external/bin</tt> to your path (Be sure to restart Visual Studio), but sometimes this does not work for some unknown reason.
+</ul>
+</li>
+<li>error LNK2005: _sprintf already defined in msvcrtd.lib(MSVCR90D.dll)<ul>
+  <li>You forgot to tell Visual Studio to ignore LIBCMT.lib</li>
+</ul>
+</li>
+<li>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _jtransform_execute_transformation referenced in function _main<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _jcopy_markers_execute referenced in function _main<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _jtransform_adjust_parameters referenced in function _main<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _jtransform_request_workspace referenced in function _main<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _jcopy_markers_setup referenced in function _main<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _write_stdout referenced in function _main<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _read_stdin referenced in function _main<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _read_scan_script referenced in function _parse_switches<br>
+Blepo.lib(jpegtran.obj) : error LNK2019: unresolved external symbol _keymatch referenced in function _parse_switches<br>
+	<ul>
+	<li>You forgot to tell Visual Studio to ignore LIBCMT.lib
+	</ul>
+</li>
+<li>error C2664: 'void ATL::CStringT&lt;BaseType,StringTraits&gt;::Format(const 
+wchar_t *,...)'<ul>
+  <li>You forgot to set the project to <tt>&quot;Use Multi-Byte 
+  Character Set&quot;</tt></li>
+</ul>
+</li>
+<li>LINK : fatal error LNK1000: Internal error during IncrBuildImage
+<ul>
+  <li>This also seems to be cause by forgetting to  use multi-byte character set.</li>
+</ul>
+</li>
+<li>mt.exe : general error c101008a: Failed to save the updated manifest to the file ".\Debug\Foo1.exe.embed.manifest". The parameter is incorrect.<ul>
+  <li>The cause of this error is unknown; try <tt>Rebuild All</tt>.</li>
+</ul>
+</li>
+<li>LINK : fatal error LNK1000: Internal error during IncrBuildImage<ul>
+  <li>This is caused by a bug in the VS2008 linker.  Either of these two solutions should work:  
+	<ol>
+	<li>disable incremental linking: <tt>Project -> Properties -> Configuration
+properties -> Linker -> General -> Enable incremental linking -> No.</tt>
+    <li>install <a href="http://www.microsoft.com/downloads/details.aspx?FamilyId=FBEE1648-7106-44A7-9649-6D9F6D58056E&displaylang=en">VS2008 Service Pack 1</a></li>
+	</ol>
+</ul>
+</li>
+<li>nasm: error: more than one input file specified<ul>
+  <li>Your Blepo path has a space in it (e.g., &quot;My Documents&quot;).&nbsp; This should be fixed now (as of version 0.6.8).</li>
+</ul>
+</li>
+<li>afx.h(24) : fatal error C1189: #error :  Building MFC application with /MD[d] (CRT dll version) requires MFC shared dll version. Please #define _AFXDLL or do not use /MD[d]<ul>
+  <li>Did you forget to check 'MFC' when you created your project?&nbsp; To fix 
+  this, you should either <ul>
+  <li>start over (create a new project, but this time be sure to check 'MFC'), 
+  or </li>
+  <li>do the following:<ul>
+  <li>In Project.Properties (be sure to select All Configurations), go to 
+  Configuration Properties.General, and change to 'Using MFC in a shared DLL'</li>
+  <li>Copy the stdafx.h from blepo's Demo directory to your project's directory.&nbsp; 
+  Your stdafx.h might look something like this:&nbsp; #include &quot;targetver.h&quot; 
+  whereas it should look more like this:&nbsp; #include &lt;afxwin.h&gt; , among other 
+  lines.</li>
+</ul>
+  </li>
+</ul>
+  </li>
+</ul>
+</li>
+<li>IntelliSense:&nbsp; #error directive:&nbsp; Please use the /MD switch for _AFXDLL 
+builds (saw this on Windows 7 64-bit VS2010, but not sure what caused it)<ul>
+  <li>In Project.Properties (select Debug), go to 
+  Configuration Properties.C/C++.Command Line, and under 'Additional options' 
+  type &quot;/MDd&quot; (without the quotes).&nbsp; Now select Release, and under 
+  'Additional options' type &quot;/MD&quot; (without the quotes).&nbsp;&nbsp; This should 
+  fix the problem.&nbsp; If you look under Configuration Properties.C/C++.Code 
+  Generation.Runtime Library, you should see 'Multi-threaded DLL (/MD)', but for 
+  some mysterious reason this flag does not show up in the Command Line.</li>
+</ul>
+</li>
+<li>c:\program files (x86)\microsoft visual studio 10.0\vc\atlmfc\include\afxv_w32.h(16): 
+fatal error C1189: #error :&nbsp; WINDOWS.H already included.&nbsp; MFC apps must not 
+#include &lt;windows.h&gt;<ul>
+  <li>Your stdafx.h was probably created without MFC.&nbsp; You will need to 
+  start over or fix your stdafx.h (see previous).</li>
+</ul>
+</li>
+<li>error LNK2001: unresolved external symbol "public: virtual __thiscall blepo::Figure::~Figure(void)" <br>
+error LNK2001: unresolved external symbol "public: __thiscall blepo::Figure::Figure(char const *,int,int,bool,bool)"<br>
+fatal error LNK1120: 2 unresolved externals
+  <ul>
+  <li>You are not linking with Blepo.  Perhaps in VS2010 you made your project dependent on Blepo but forgot to add Blepo as a reference.&nbsp; 
+  Another possibility is that the blepo directory that you added to your PATH 
+  environment variable has spaces in it, but you did not enclose it in double 
+  quotes.</ul>
+<li>atlsd.lib(atltypes.obj) : error LNK2005: "public: __thiscall CPoint::CPoint(void)" (??0CPoint@@QAE@XZ) already defined
+	<ul>
+	<li>This error occurs when the project contains a reference to blepo at an old location, that is, when you have moved blepo on your hard drive so 
+	that the project can no longer find it.  You should delete the obsolete reference to blepo, then add a new reference to blepo using the new
+	location.  If this does not work, then you will need to open the project file (with extension .vcxproj) in a text editor and manually 
+	delete the line containing the reference to the old blepo location.  Then save this file, reload the project, and add the reference to
+	blepo at the new location in the usual manner.
+	</ul>
+<li>more than one input file specified
+  <ul>
+  <li>After version 0.6.8, this problem should not occur.  The <tt>Blepo.vcxproj</tt> file should have quotes around the input filename, e.g., <tt>"%(FullPath)"</tt>.  However, in one case, using VS2010 on Windows 7, the Blepo.vcxproj file the quotes had been removed somehow.
+  </ul>
+<li>When you compile your project and try to run it, you get a warning message 
+saying the project is out of date, do you want to rebuild.&nbsp; The cause of 
+this is that some files in your project may not exist in the file system.&nbsp; 
+With Blepo 0.6.8, for example, the file Image/Algorithms/opencv/cv.h points to a 
+non-existent file; and in Blepo's Demo project, the file DirectShowForDummies.h 
+points to a non-existent file.&nbsp; Of course, both of these files exist in a 
+different place, but if you delete these bad pointers from the corresponding 
+projects, the warning should go away.<br>
+&nbsp;</li>
+
+</ol>
+
+</li>
+<li>Errors with Blepo (should not occur unless you have made changes to the 
+Blepo project):<ol>
+<li>"Unable to load Haar classifier cascade" from <tt>FaceDetector.cpp</tt>
+  <ul>
+  <li>Solution:  Right click Blepo, then <tt>Properties -> Configuration Properties -> C/C++-> Command Line</tt>, Add <tt>/FC</tt>.  
+  (This causes <tt>__FILE__</tt> to store the absolute path of the filename.)
+  </ul>
+<li>WINVER not defined. Defaulting to 0x0600 (Windows Vista)<ul>
+  <li>Solution:  Right click Blepo, then <tt>Properties -> Configuration Properties -> C/C++->
+Preprocessor -> <br>
+  Preprocessor definitions</tt>.&nbsp; Add <tt>_WIN32_WINNT=0x500;</tt></li>
+</ul>
+</li>
+<li>warning C4996: 'fopen': This function or variable may be unsafe. Consider 
+using fopen_s instead.<ul>
+  <li>Solution:  Right click Blepo, then <tt>Properties -> Configuration Properties -> C/C++->
+Preprocessor -> <br>
+  Preprocessor definitions</tt>.&nbsp; Add <tt>_CRT_SECURE_NO_WARNINGS</tt></li>
+</ul>
+</li>
+<li>cv.lib(cv100.dll) : warning LNK4006: __NULL_IMPORT_DESCRIPTOR already 
+defined in 1394camera.lib(1394camera.dll); second definition ignored<br>
+cv.lib(cv100.dll) : warning LNK4221: no public symbols found; archive member 
+will be inaccessible<br>
+...<ul>
+  <li>Solution:  Right click Blepo, then <tt>Properties -> Configuration Properties -> 
+  Librarian -> <br>
+  Command line -&gt; Additional options.</tt>&nbsp; Add <tt>/ignore:4006,4221</tt></li>
+</ul>
+</li>
+<li>c:\program files\microsoft visual studio9.0\vc\atlmfc\include\afxv_w32.h(169) : 
+fatal error C1083: Cannot open include file: 'windows.h': No such file or directory
+<ul>
+<li>This error means the Windows SDK has not been installed properly.  This error occurred on an 
+IBM Thinkpad with WinXP.  The solution was to run the installer again, check/uncheck any arbitrary feature,
+then click update.  This forces the installer to notice that the SDK is missing and therefore install it.  (Note:  
+The Windows SDK is in c:\program files\microsoft sdks\windows\v6.0a)
+</ul>
+<li>c:\program files\microsoft sdks\windows\v6.0a\include\winnt.h(237) : error 
+C2146: syntax error : missing ';' before identifier 'PVOID64'<br>
+c:\program files\microsoft sdks\windows\v6.0a\include\winnt.h(237) : error 
+C4430: missing type specifier - int assumed. Note: C++ does not support default-int<br>
+c:\program files\microsoft sdks\windows\v6.0a\include\winnt.h(7819) : error 
+C2146: syntax error : missing ';' before identifier 'Buffer'<br>
+c:\program files\microsoft sdks\windows\v6.0a\include\winnt.h(7819) : error 
+C4430: missing type specifier - int assumed. Note: C++ does not support default-int<br>
+c:\program files\microsoft sdks\windows\v6.0a\include\winnt.h(7819) : error 
+C4430: missing type specifier - int assumed. Note: C++ does not support default-int<ul>
+  <li>This problem occurred once on a 32-bit XP machine (same error was reported 
+  on a 64-bit machine).&nbsp; The cause of the error is not known, but the 
+  workaround was to manually insert the line<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #define POINTER_64 __ptr64<br>
+  in c:\program files\microsoft sdks\windows\v6.0a\include\winnt.h just before 
+  line 237:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; typedef void * POINTER_64 PVOID64;
+<li>This problem may no longer occur in Blepo 0.6.9 or above, since this line has now been 
+inserted into external\Microsoft\DirectX\DXSDK\Include\basetsd.h.</li>
+</ul>
+</li>
+</ol>
+
+</li>
+</ol>
+
+<a name="VC60">
+<h2>Getting started with Visual C++ 6.0</h2>
+</a>
+
+<p>Once you have performed the steps in &quot;Setting up your system&quot; above, you should be able to open <tt>Demo/Demo.dsw</tt> in Visual C++ 6.0, compile the code, and run. This workspace will be a good starting point for learning how to build an executable 
+using the library.&nbsp; However, you may first have to add the gsl (GNU 
+scientific library) path to your include directory:
+
+  <ul>
+  <li>
+In Visual C++ 6.0, 
+<tt>Tools -> Options -> Directories -> Include files -> add blepo\external\WinGsl</tt>, where <tt>blepo</tt> is the path to your Blepo directory.</ul>
+<p>In addition,</p>
+<ul>
+  <li>The NASM assembler, which is used to compile the assembly code, must be in your executable path.  The name of this file is 
+<tt>nasm.exe</tt> and it resides in the <tt>external/bin</tt> directory.  For some inexplicable reason the  step 
+  above to modify your environment path does not 
+solve this problem for VS6.0, so you have to copy the <tt>nasm.exe</tt> file to an existing directory on your path, such as 
+<tt>C:/Windows/System32</tt>.&nbsp; </li>
+</ul>
+
+<p>
+To create a new project to use Blepo, 
+<ol>
+<li>Create a project with <tt>File -> New -> Project</tt>
+	<ul>
+	<li>Either <tt>Win32 Console Application -> An application that supports MFC</tt>, or
+	<li><tt>MFC App Wizard</tt> (Dialog based is the simplest, but the other application types should work as well)
+	</ul>
+<li>Make the project use the Blepo library.
+	<ul>
+	<li>The simplest option is to add Blepo to the workspace and make the project 
+	dependent upon Blepo.  More specifically,
+		<ol>
+		<li><tt>Project -> Insert Project into Workspace</tt>
+		<li>Select <tt>blepo/src/blepo.dsp</tt>
+		<li>Set your project to the active project again (<tt>Project -> Set Active Project</tt>)
+		<li>Make your project dependent upon Blepo (<tt>Project -> Dependencies</tt>, check the box next to <tt>Blepo</tt>) 
+		</ol> 
+	<li>Alternatively, you can compile Blepo separately and just add the .lib files to 
+the project (the <tt>blepo.lib</tt> file as well as all the other <tt>.lib</tt> files in the Blepo project). 
+	</ul>
+<li>Include the Blepo header file (<tt>#include "blepo.h"</tt>).  For the compiler to find this file, you will need to do
+one of the following:
+	<ul>
+	<li>Add the <tt>blepo/src</tt> path to your project include path (<tt>Project -> Settings -> C/C++ -> Additional include directories</tt>), or
+	<li>Add the path to your VC++ list of include directories (<tt>Tools -> Options -> Directories -> Include directories</tt>), or
+	<li>Put the path into the <tt>#include</tt> statement.
+	</ul>
+<li>Since OpenCV (as of version 2.0) is no longer compatible with VS6.0, you will have to 
+  tell Blepo to use the old version of OpenCV.&nbsp; Either<ul>
+    <li>manually 
+  uncomment the line
+  #define BLEPO_I_AM_USING_VISUAL_CPP_60__ in blepo.h, or</li>
+    <li>insert the constant into the compiler directives using <tt>Project -&gt; 
+    Settings -&gt; C/C++ -&gt; Preprocessor definitions</tt></li>
+  </ul>
+</li>
+</li>
+<li>Now build the project and run.
+	<ul>
+	<li>If you're using a Win32 Console application, then add your code in the <tt>else</tt> clause of <tt>_tmain</tt>.  <br>(Do not forget to call <tt>EventLoop()</tt>, as mentioned in the Blepo tutorial.)
+	<li>If you're using an MFC Application, then 
+		<ol>
+		<li>Click the <tt>ResourceView</tt> tab.  Then click <tt>'* resources'</tt>, then doubleclick <tt>Dialog -> IDD_*_DIALOG</tt>, where <tt>*</tt> is the name of your project, to see the dialog
+		<li>In the toolbar, click <tt>Button</tt>, then click inside the dialog to place a new button in the dialog.
+		<li>Right-click the button, select <tt>Class Wizard</tt>.  Go to 'Message Maps' tab, then click 'BN_CLICKED' message.  Click 'Add function', then change the name if you want.
+		<li>Click 'OK'.  Now, in the <tt>.cpp</tt> file insert Blepo code in the function.  When you run the program and click the button, this code will be called.  
+		<li>Note that you will not be able to use <tt>printf</tt>, so instead pass a string to <tt>AfxMessageBox</tt>.  Use <tt>CString::Format</tt> if you need to format a string.  Example:
+			<blockquote>
+			CString str;<br>
+      int x;<br>
+			str.Format("variable x = %d", x);<br>
+			AfxMessageBox(str);
+			</blockquote>
+			Of course, for viewing variables the debugger is much more efficient.
+		</ol>
+	</ul>
+</ol>
+
+<p><b>Some common errors in VS6.0:</b></p>
+
+<ol>
+<li>Errors with project:<ol>
+<li>'nasmw.exe' is not recognized as an internal or external command, operable 
+program or batch file.
+  <ul>
+  <li>Did you remember to copy nasmw.exe to <tt>c:/windows/system32</tt>?  Of course, it should also work if you add <tt>c:/blepo/external/bin</tt> to your path (Be sure to restart Visual Studio), but sometimes this does not work for some unknown reason.
+  <li>Are you using multiple partitions?  Visual Studio has been known to be unable to find nasmw even when it is in the <tt>c:/windows/system32</tt> directory.  
+      The cause appears to be that the project files were on a different partition from the C: drive.  A workaround is to compile all the .asm files by hand, outside Visual Studio.  A batch script to make this easy can be found in the Quick directory.
+</ul>
+</li>
+<li>c:\stb\cvs-local\research\code\vc6\alpha1\external\opencv-2\cxoperations.hpp(190) : error C2556: 'int __cdecl cv::saturate_cast(float)' : overloaded function differs only by return type from 'unsigned short __cdecl cv::saturate_cast(float)'
+  <ul>
+    <li>This only occurs if you are using Visual C++ 6.0.  The problem is that you are using OpenCV 2.1, which is incompatible with VC6.0.  Solution:
+       <ol>
+       <li>Select Project.Settings.  Select your project (not Blepo), and select 'All configurations'.
+       <li>Then go to the C/C++ tab and select Preprocessor.  Under Preprocessor definitions, append to the end a comma followed by BLEPO_I_AM_USING_VISUAL_CPP_60__
+       </ol>
+  </ul>
+<li>fatal error C1083: Cannot open precompiled header file:
+  <ul>
+  <li>Do Rebuild All.  As long as you have stdafx.h in your program, it should compile.  However, it is recommended that you turn off precompiled headers:  Project.Settings.All Configurations.C/C++.Precompiled Headers.Not using precompiled headers.
+  </ul>
+<li>LINK : fatal error LNK1104: cannot open file
+  <ul>
+  <li>Usually this occurs because your program is still executing, and therefore Visual Studio cannot write to the .exe file.  Stop execution and try again.
+  <li>On Windows 7, this strange behavior has been observed:  The new program is stored in C:\Program Files (x86)\Microsoft Visual Studio\, but the subdirectory with the project name does not exist.  What VS thinks it exists is a mystery.  Solution:  Save your project somewhere else.
+  </ul>
+</ol>
+
+</li>
+
+</li>
+</ol>
+
+
+<p>
+Enjoy!</ul>
+</ul>
+</ul>
+</ul>
+</ul>
+</ul>
+</ul>
+</ul>
+</ul>
+</ul>

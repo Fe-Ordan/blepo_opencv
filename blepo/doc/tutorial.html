@@ -1,0 +1,420 @@
+<title>Blepo tutorial</title>
+
+<center><h1>Blepo Tutorial</h1></center>
+
+<p>This tutorial provides a quick introduction to the use of Blepo.  To begin, let us 
+load and display an image in a window:
+<pre>    #include "blepo.h"
+    using namespace blepo;
+
+    {
+      ImgGray img;              // an 8-bit-per-pixel grayscale image
+      Figure fig;               // a figure
+      Load("image.bmp", &amp;img);  // load file into image
+      fig.Draw(img);            // draw image in figure
+    }
+</pre>
+
+This example illustrates the simplicity of the library.  There is a single header file,
+and the image data are allocated and deallocated automatically.  All functions and classes 
+in the library are scoped by the <tt>blepo</tt> namespace, so you have the choice of
+either scoping each call with the prefix <tt>blepo::</tt> or calling <tt>using namespace 
+blepo</tt>, as is
+done here.  In a console-based application, be sure to call <tt>EventLoop()</tt> 
+before returning from <tt>main()</tt> or else the program will exit before the figure
+has the chance to display.
+
+<p>
+In this example, the first line of code simply instantiates a grayscale image.  This
+line incurs essentially no overhead because no memory is allocated for the image data 
+itself (since the size of the image is not given).  The second line instantiates a figure,
+which causes a small window to display on the screen.  The <tt>Load</tt> function
+loads an image from a file, automatically resizing the <tt>img</tt> object to hold it,
+and converting from color to grayscale if necessary.
+The last line copies the image to the figure, which causes the image to be drawn in the window
+(and redrawn whenever the window needs to be repainted).
+When the closing brace is encountered, the image and figure objects fall out of scope, and
+the image destructor causes all of the memory for the image data to be automatically deallocated.
+By default, the figure destructor does nothing, so that the window persists on the
+screen until the user closes the window or the application exits.  This behavior makes
+it easy to rapidly inspect images and data for debugging purposes, but it can be overridden
+by a parameter to the <tt>Figure</tt> contructor if desired.
+
+<h3>The image class</h3>
+
+Because the image class is the backbone of the library, let us look at it in more detail.
+An image is simply an array of pixels, along with a
+small header containing the image width and height.  When the constructor is called
+with no parameters (as is done above), the width and height are set to zero, and the internal
+data pointer is set to NULL.  As a result, this is an extremely quick operation.
+Alternatively, the image dimensions can be passed to the constructor, in which
+case memory is allocated (on the heap) to hold the image data.  Either way, once an image 
+has been created, the <tt>Reset</tt> function can be 
+called to reallocate the memory at any time, and the destructor automatically frees the
+memory when the image falls out of scope.  (Note that the <tt>Load</tt> function above 
+calls <tt>Reset</tt>.)
+
+<pre>    {
+      ImgGray img;             // an empty image
+      img.Reset(320, 240);     // allocates memory for a 320 x 240 image
+      img.Reset(160, 120);     // reallocates memory for a 160 x 120 image
+      ImgGray img2(320, 240);  // a 320 x 240 image
+      img2.Reset(160, 120);    // reallocates memory for a 160 x 120 image
+      img2.Reset(160, 120);    // does nothing (no penalty incurred) because data already allocated
+    }                          // all memory is freed when images fall out of scope
+</pre>
+Thus, the user should never have to worry about 
+explicitly allocating or deallocating memory, because the library takes care of those
+details automatically.  And yet the memory management is done in a transparent way,
+so that the user remains in complete control.  Those familiar with the Standard Template Library (STL)
+will notice the similarity.  
+
+<p>
+Each image manages its own data.  Therefore the assignment operator and 
+copy constructor make an exact copy of the image dimensions and data.
+Subsequent changes to one image have no effect on the other image.
+<pre>    ImgGray img2(img);  // copy constructor
+    img2 = img;         // assignment operator
+</pre>
+As a sidenote, be sure when writing your own functions never to pass an image "by value,"
+which will cause the copy constructor to be called (an expensive operation).  For efficiency 
+reasons, images should always be passed "by reference" or "by pointer," as they are in Blepo.  
+
+
+<h3>Accessing pixels</h3>
+
+Image data are arranged in memory in row-major order in sequential bytes, starting from the top-left.  There are no extra bytes
+for alignment, so a 7 x 3 grayscale image is stored in 21 contiguous bytes.  To access an individual
+pixel in a grayscale image, simply pass the zero-based column (x), followed by the 
+zero-based row (y), to the parenthesis
+operator:
+<pre>    unsigned char val;
+    val = img(33, 22);  // get pixel at column 34, row 23 -- since the top-left pixel is at (0,0)
+    img(33, 22) = val;  // set pixel at column 34, row 23
+</pre>
+To change all the pixels in the image, simply iterate through them:
+<pre>    unsigned char val = 255;  // new value
+    for (y=0 ; y&lt;img.Height() ; y++)
+    {    
+    	for (x=0 ; x&lt;img.Width() ; x++)
+    	{
+    		img(x,y) = val);
+    	}
+    }</pre>
+<p>The parenthesis operator is inlined, so  no function overhead is incurred.  Moreover, 
+bounds checking is performed using <tt>assert</tt> statements so that they disappear in Release
+mode, thus incurring no run-time penalty except during development.  Nevertheless, the operator 
+is fairly inefficient, since it uses arithmetic to compute the offset from the first pixel -- i.e., <tt>img(x,y)</tt> 
+computes <tt>dataptr+y*width+x</tt>. 
+
+A more efficient way to access pixels is to use pointers to the data: </p>
+<pre>    unsigned char* p;
+    for (p = img.Begin() ; p != img.End() ; p++)  *p = 15;  // set all pixels to value 15
+</pre>
+The <tt>Begin</tt> method returns a pointer to the first pixel, while <tt>End</tt> returns a pointer to the byte just 
+after the last pixel.  Like <tt>Begin</tt>, <tt>End</tt> returns a precomputed value and is inlined, 
+so there is no penalty for calling this method each time through the loop. 
+
+<p>
+To get read-only access to the pixels, use the <tt>const</tt> keyword.  Although this is not,
+strictly speaking, necessary, it does improve code readability and provides for additional
+compile-time checking:
+<pre>    const unsigned char* p = img.Begin();
+    unsigned char val = *p;                   // get value of pixel
+</pre>
+
+
+<p>
+To get a pointer to a particular pixel, pass the coordinates of the
+pixel to the Begin method.  This operation can be useful when processing a subarray
+within an image.
+<pre>    unsigned char* p = img.Begin(x, y);  // returns a pointer to pixel (x, y)
+</pre>
+
+
+<h3>Built-in image operations</h3>
+
+For simple operations such as setting all the pixels to a constant value, it is much
+easier to call a built-in function of the library.  In general, built-in
+functions should be used whenever possible because they are often optimized using 
+SIMD operations, making them faster than doing it yourself.
+<pre>  ImgGray img, img2;
+  Rect r(10, 10, 50, 50);  // a rect structure (left, top, right, bottom)
+  Point p(20, 30);         // a point structure (x, y)
+  Set(&img, 15);           // set all pixels to value 15
+  Set(&img, r, 15);        // set all pixels within a rectangle to value 15
+  Set(&img, p, img2);      // copy entire 'img2' to 'img' at (20, 30)
+                           //   ('img2' is smaller than 'img')                                    
+  Set(&img, p, img2, r);   // copy rect of 'img2' to 'img' at (20, 30)
+  Extract(img2, r, &img);  // extract rectangle from 'img2'
+</pre>
+In addition, there are built-in functions for performing arithmetic and logical 
+operations (<tt>And</tt>, <tt>Or</tt>, <tt>Xor</tt>, ...), along with functions for comparing 
+images (<tt>Equal</tt>, <tt>LessThan</tt>, <tt>GreaterThan</tt>, <tt>IsSameSize</tt>, 
+<tt>IsIdentical</tt>, ...).
+
+<h3>Parameter ordering and conventions</h3>
+
+If you look carefully at all the preceding code, you will notice that the ordering of 
+function parameters is systematic:  Inputs precede outputs, and outputs are passed
+as pointers.  Parameters that are both input and output are also passed as pointers, but 
+at the beginning rather than the end.  Thus, <tt>img</tt> is an output in <tt>Load</tt> and <tt>Extract</tt>, whereas
+it is both input and output in <tt>Set</tt>:  
+<pre>    Load("image.bmp", &img);  // 'img' is output (img.Reset is called)
+    Extract(img2, r, &img);   // 'img2' is input, 'img' is output (img.Reset is called)
+    Set(&img, 15);            // 'img' is input/output; img.Reset is NOT called
+</pre>
+These simple conventions make it easy to remember how to call a function.  They also
+greatly improve code readability, because they make it 
+possible to distinguish immediately the inputs from the outputs simply by looking at a 
+function is called, without having to know anything about the semantics of the function itself.  
+
+<h3>Efficient passing</h3>
+
+<p>Images are large data structures.&nbsp; For efficiency reasons, you do not 
+want to pass them around <i>by value</i>.&nbsp; Instead, you should pass them <i>
+as pointers</i> or <i>by reference</i>.&nbsp; Here is an example of a good 
+function prototype:</p>
+
+<pre>    void f(const ImgGray&amp; a, ImgGray* b);  // 'a' is input, 'b' is output</pre>
+<p>In this function, the parameter <tt>a</tt> is passed as a const reference.&nbsp; The <tt>const</tt> keyword indicates that the function 
+has read-only access to the variable <tt>a</tt>.&nbsp; The 
+ampersand (<tt>&amp;</tt>) indicates 
+that it is passed as a reference, which  means that the image itself
+is not copied; rather, inside the function <tt>a</tt> is simply another name (an alias) for the image 
+that was passed in.&nbsp; The variable <tt>b</tt> is passed as a 
+pointer, which also means that the image itself is not copied; rather, <tt>b</tt> 
+is a pointer that can be dereferenced to access the image that was passed in.&nbsp; </p>
+
+<p>To call this function, pass it two images:
+<pre>    ImgGray a, b;
+    f(a, &b);
+</pre>
+Note that pass <i>by reference</i> and pass <i>as pointer</i> achieve the same behavior with different syntax.  With the former
+the ampersand (meaning 'reference') is in the prototype, while with the latter the ampersand (meaning 'take the address of') 
+must be used each time the function is called.&nbsp; Which approach to use is 
+largely a matter of style -- the library adopts the convention that inputs are 
+passed using const references while outputs are passed using pointers.<h3>Other image types</h3>
+
+In addition to <tt>ImgGray</tt>, there are several other image classes, the only difference
+between them being the pixel type.  Each class has exactly the same interface:
+<pre>    ImgX img;                // an image
+    ImgX::Pixel val;         // a pixel
+    ImgX::Iterator p;        // an iterator (pointer)
+    ImgX::ConstIterator q;   // a const iterator (pointer)
+    p = img.Begin();         // get an iterator to the first pixel
+    val = *p;                // get the value
+    val = *q;                // get the value
+    *p = val;                // set the value
+    *q = val;                // error!  cannot set using const iterator
+</pre>
+where <tt>ImgX</tt> can be replaced by any of the image classes.  For most of the classes,
+this interface is achieved using <tt>typedef</tt>.  For example, <tt>ImgGray::Pixel</tt>
+is simply <tt>typedef</tt>ed to <tt>unsigned char</tt>, an <tt>ImgInt</tt> pixel is an <tt>int</tt>, an
+<tt>ImgFloat</tt> pixel is a <tt>float</tt>, and an <tt>ImgBgr</tt> pixel is a <tt>Bgr</tt> struct that
+contains three <tt>unsigned char</tt>s:
+<pre>    struct Bgr { unsigned char b, g, r; };
+</pre>
+For any of these classes you are free to use either the basic type or the uniform interface,
+whichever you prefer.  The only exception to this is that you must use 
+<tt>ImgBinary::Iterator</tt> and <tt>ImgBinary::ConstIterator</tt>, because these are special
+internal classes that overcome the problem that 
+in C++ <tt>bool*</tt> is not a pointer to a bit.
+
+To convert between images of different types, simply call <tt>Convert</tt>:
+<pre>    ImgGray img_gray;
+    ImgBgr img_bgr;
+    Convert(img_gray, &img_bgr);
+</pre>
+
+
+<p>
+To access pixels in one of these other image classes, simply replace <tt>unsigned char</tt> with
+the pixel type.&nbsp; For example, pixels in a BGR image are accessed in the following manner:
+<pre>    Bgr val;
+    val = img(33, 22);  // get pixel at column 34, row 23 -- since the top-left pixel is at (0,0)
+    val.b = 255;
+    val.g = 0;
+    val.r = 0;
+    img(33, 22) = val;  // set pixel at column 34, row 23 to blue
+</pre>
+<p>and so on. </p>
+
+<h3>Algorithms</h3>
+
+Once you have an image, it is straightforward to call any of the image processing or computer vision
+algorithms.  Here are some examples:
+<pre>    ImgGray img, gradx, grady, gradmag, img_smooth, filled;
+    unsigned char new_color = 255;
+    Point seed(20, 30);
+    std::vector&lt;Rect&gt; rectlist;        // array of rectangles
+    Prewitt(img, &gradx, &grady);      // compute Prewitt edges
+    Sobel(img, &gradx, &grady);        // compute Sobel edges
+    PrewittMag(img, &gradmag);         // compute magnitude of Prewitt edges
+    Gradient(img, &gradx, &grady);     // compute gradient using Gaussian derivative
+    SmoothGauss5x5(img, &img_smooth);  // smooth image by convolving with 5x5 Gaussian
+    FloodFill4(img, new_color, 
+      seed.x, seed.y, &filled);        // floodfill (4-connected)
+    FaceDetector det;
+    det.DetectFaces(img, &rectlist);   // detect faces
+</pre>
+
+Some of these functions are optimized to use SIMD.(MMX/SSE/SSE2) operations, while others
+are unoptimized.  Some of these functions are written from scratch for Blepo, while others
+are wrappers around code obtained from other libraries.
+
+<h3>Linear algebra</h3>
+
+The matrix class <tt>MatDbl</tt> contains a 2D array of doubles, stored contiguously in row-major
+order.  The interface is the same as that of the image classes:
+<pre>    MatDbl mat;           // an empty matrix
+    MatDbl mat2(15, 10);  // a matrix with 15 columns, 10 rows
+    mat.Reset(15, 10);    // reallocate for 15 columns, 10 rows
+    double val;
+    val = mat(3, 5);      // get value at column 3, row 5
+    mat(3, 5) = val;      // set value at column 3, row 5
+</pre>
+Note that the interface is not consistent with standard linear algebra notation in two ways:
+<ol>
+<li> Indices are zero-based, not one-based
+<li> Elements are indexed by (column, row), rather than (row, column)
+</ol>
+We trust that the first inconsistency will meet with little resistance among C/C++ programmers,
+since zero-based indexing is natural to these languages.  Although the second inconsistency is
+admittedly unnatural, we believe that internal inconsistency within the library is more
+important than partial consistency with external notation, in order to avoid problems such as
+Matlab's <tt>ginput</tt> function, whose ordering is the reverse of most other Matlab
+functions, leading to confusion.  For those who prefer the more traditional (row, column)
+indexing, an alternate "ij" interface is available:
+<pre>    MatDbl mat;                 // an empty matrix
+    MatDbl mat2(10, 15, "ij");  // a matrix with 10 rows, 15 columns
+    mat.ijReset(10, 15);        // reallocate for 10 rows, 15 columns
+    double val;
+    val = mat.ij(5, 3);         // get value at row 5, column 3
+    mat.ij(5, 3) = val;         // set value at row 5, column 3
+</pre>
+
+<p>
+Basic matrix operations, such as add, multiply, transpose, creating identity matrices, etc.,
+can be called as follows:
+<pre>    MatDbl a, b, c;
+    MatDbl d(4);             // create vertical vector (4 rows)
+    double eps = 0.01;
+    bool s;
+    Eye(4, &a);              // create identity matrix (4 columns, 4 rows)
+    Rand(6, 3);              // create random matrix (6 columns, 3 rows)
+    Add(a, b, &c);           // compute c = a + b
+    Multiply(a, b, &c);      // compute c = a * b (matrix multiply) ????????????????
+    s = Similar(a, b, eps);  // returns whether matrix elements are the same, within 'eps'
+    Transpose(a, &c);        // computer c = a^T
+    Diag(d, &c);             // create diagonal matrix from vector
+    Diag(c, &d);             // create vector by extracting diagonal from matrix
+</pre>
+
+Linear algebra routines are provided via wrappers around the GNU Scientific Library (GSL)
+functions:
+<pre>    MatDbl a, u, s, v, l, p, q, r, eval, evec, x, inv;
+    Svd(a, &u, &s, &v);           // singular value decomposition (SVD) (a = u * Diag(s) * v)
+    Lu(a, &l, &u, &p);            // LU decomposition (p * a = l * u)
+    Qr(a, &q, &r);                // QR factorization (a = q * r)
+    EigenSymm(a, &eval, &evec);   // eigenvalues and eigenvectors of symmetric matrix
+    double det = Determinant(a);  // determinant
+    SolveLinear(a, b, &x);        // solve (possibly overdetermined) A x = b
+    Inverse(a, &inv);             // inverse
+</pre>
+
+<p>
+When efficiency is not important (e.g., when quickly prototyping a new idea), it may be 
+preferable to use more compact notation, which is provided using overloaded operators.  
+For example:
+<pre>    MatDbl a, b, c, d, e;
+    e = a * b + Transpose(c) * Inverse(d);  // compute d = a * b + c^T * d^{-1}
+</pre>
+
+<h3>Drawing</h3>
+
+We have already seen how to display an image in a window using the <tt>Draw</tt> method
+of the <tt>Figure</tt> class.  Another useful method of the class is <tt>GrabMouseClick</tt>:
+<pre>    ImgGray img;
+    Figure fig;
+    fig.Draw(img);
+    Point pt = fig.GrabMouseClick();    // wait until user clicks the mouse in the figure
+    printf("point = %d, %d\n", pt.x, pt.y);
+</pre>
+<tt>GrabMouseClick</tt> draws cross-hairs in the figure as the mouse is moved; when the user
+clicks inside the figure, then processing resumes with the next line of code (in this
+case printing the coordinates).  In this manner, you can easily get mouse input without
+having to write your own callback.
+
+<p>
+Before displaying an image, you can overlay lines, points, rectangles, ellipses, etc. 
+using the following functions:
+<pre>    ImgBgr img;
+    Bgr color(0, 255, 0);                       // green
+    Point pt1(10, 10), pt2(20, 20);             // two points
+    int radius = 15;
+    DrawLine(pt1, pt2, &img, color);            // draw line
+    DrawRect(rect, &img, color);                // draw rectangle
+    DrawCircle(pt1, radius, &img, color);       // draw circle
+</pre>
+Note that these functions actually change the image itself.
+
+<p>
+To display an image directly onto an existing window, simply call the <tt>Draw</tt> function.  
+In this example, <tt>MyWindow</tt> derives from <tt>CWnd</tt>:
+<pre>    void MyWindow::Func() 
+    {
+      CClientDC dc(this);
+      Draw(img, dc, 0, 0);   // draw image in upper-left corner of window
+    }
+</pre>
+
+<h3>Capture</h3>
+
+Several classes exist to aid capturing images and video from cameras.  The following code
+captures from a USB webcam via Microsoft's DirectShow framework:
+<pre>    ImgBgr img;
+    bool new_img;
+    CaptureDirectShow cap;                  // create capture object
+    cap.BuildGraph(320, 240);               // build DirectShow graph
+    cap.Start();                            // start live capture
+    new_img = cap.GetImage(&img);           // get latest image
+    if (new_img)
+    {
+      // use 'img'
+    }
+</pre>
+
+Similar classes exist to capture from other devices.
+
+<h3>Error handling</h3>
+
+<p>
+Errors in Blepo are roughly divided into two categories.  Errors which are the result
+of programmer mistakes (e.g., trying to add two images of different sizes)
+are often checked only with an assert statement.  As a result, researchers are 
+encouraged to use Debug mode whenever possible.
+
+<p>
+If an error occurs that is system-related (e.g., trying to load from a file that 
+does not exist, or trying to capture from a camera that is not plugged in), 
+an <tt>Exception</tt>
+is thrown.  Unless you are happy with the application crashing because of an unhandled exception,
+you should handle these errors by wrapping your code with a <tt>try / catch</tt> block:
+<pre>    try
+    {
+      // call blepo code
+    }
+    catch (const Exception& e)
+    {
+      e.Display();    // display exception to user in a popup window 
+    }
+</pre>
+The <tt>Display</tt> method informs the user of the type of error, along with the line and
+file number where the error occurred.  To see which functions may throw an exception,
+look at the header files.  
+
+<h3>For further information</h3>
+
+Hopefully this tutorial has provided enough information to get you started using Blepo.  For 
+further information, consult the reference manual or the actual source code.

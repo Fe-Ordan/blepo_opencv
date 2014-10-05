@@ -1,0 +1,41 @@
+Sensoray SX11 Software Development Kit (SDK) v.2.1 Release Notes
+================================================================
+                      (January, 2002)
+
+SX11 SDK v.2.1 provides support for all Sensoray X11 family frame
+grabbers (built with Bt848 and Fusion878 chips). The SDK uses the
+new driver that supports Windows98/2000/NT/XP platforms.
+
+As in the previuos SDK, Basic and Enhanced versions are available.
+The Enhanced SDK supports the following features (not supported in
+the Basic version): capture into video memory using DirectDraw,
+mapping a capture buffer on the external buffer, bi-modal capture.
+The source code for all sample applications is provided with the
+Basic version. The Enhanced SDK is a complete package, rather than
+an addition to the Basic SDK. Only one of two needs to be installed.
+However, if the Enhanced SDK is purchased after the Basic SDK has
+been already installed, it is recommended to install it into the
+same directory to avoid unnecessary file duplication.
+
+The SDK allows easy creation of multimodule projects by splitting
+DLL functions' definitions and declarations into separate files.
+Please see the "BUILDING AN APPLICATION WITH SX11.DLL" section of
+the software reference for details, and sample source code for
+examples.
+
+No changes to the application code is necessary when migrating from
+the SDK v.2.0. The applications have to be recompiled with the new
+include files.
+
+Windows95 is not supported.
+
+Known issues and limitations
+============================
+1. The Enhanced SDK supports capture into video card's memory
+using DirectDraw. Even if you have a Basic SDK which does not support
+this feature, loading sx11.dll will cause loading of some DirectX
+components. On the systems that do not have those components installed
+this may result in system error messages. To avoid those, and also in case
+you need to minimize the number of loaded Windows components, use the
+version of sx11.dll that does not have any references to DirectX (located
+in \Program Files\SX11 SDK v.2.1\Lib\NoDDRAW).

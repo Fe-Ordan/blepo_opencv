@@ -1,0 +1,286 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Demo.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Demo.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 235, 55
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Demo"
+FONT 8, "MS Sans Serif"
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
+    LTEXT           "Demo Version 1.0",IDC_STATIC,40,10,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2004",IDC_STATIC,40,25,119,8
+    DEFPUSHBUTTON   "OK",IDOK,178,7,50,14,WS_GROUP
+END
+
+IDD_DEMO_DIALOG DIALOGEX 0, 0, 516, 345
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Demo"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,459,7,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,459,23,50,14
+    PUSHBUTTON      "Load image",IDC_BUTTON_LOAD_AND_DISPLAY,14,22,49,14
+    PUSHBUTTON      "Face detect",IDC_BUTTON_FACE_DETECT,190,58,50,14
+    PUSHBUTTON      "Edge detect",IDC_BUTTON_EDGE_DETECT,107,181,50,14
+    PUSHBUTTON      "Connected components",IDC_BUTTON_CONNECTED_COMPONENTS,
+                    15,132,80,14
+    LTEXT           "",IDC_STATIC_STATUS,7,330,135,8
+    PUSHBUTTON      "KLT Feature tracker",IDC_BUTTON_KLT_FEATURE_TRACKER,190,
+                    39,68,14
+    PUSHBUTTON      "LoG",IDC_BUTTON_LOG,107,157,40,16
+    PUSHBUTTON      "Linear algebra",IDC_BUTTON_LINEAR_ALGEBRA,381,23,50,14
+    PUSHBUTTON      "Split and Merge",IDC_BUTTON_SPLITANDMERGE,107,108,60,14
+    LISTBOX         IDC_LIST_DSHOW_VIDEO_DEVICES,276,254,137,22,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Start capture",IDC_BUTTON_DSHOW_CAPTURE,422,245,83,14
+    PUSHBUTTON      "Snakes",IDC_BUTTON_SNAKES,190,115,50,14
+    PUSHBUTTON      "Morphology",IDC_BUTTON_MORPHOLOGY,15,156,50,14
+    PUSHBUTTON      "Show movie",IDC_BUTTON_SHOW_MOVIE,14,43,49,14
+    PUSHBUTTON      "IEEE1394 Camera",IDC_BUTTON_IEEE1394,187,317,73,14
+    PUSHBUTTON      "Flood fill",IDC_BUTTON_FLOOD_FILL,15,108,41,14
+    PUSHBUTTON      "&Histogram",IDC_BUTTON_HISTOGRAM,357,181,50,14,
+                    WS_DISABLED
+    PUSHBUTTON      "CrossCorr Template",IDC_BUTTON_CROSSCORR_TEMPLATE,434,
+                    138,67,14,WS_DISABLED
+    PUSHBUTTON      "CrossCorr Stereo",IDC_BUTTON_CROSSCORR_STEREO,434,117,
+                    67,14,WS_DISABLED
+    PUSHBUTTON      "Efros Leung",IDC_BUTTON_EFROSLEUNG,356,161,50,14,
+                    WS_DISABLED
+    PUSHBUTTON      "Test",IDC_BUTTON_TEST,442,183,26,14,WS_DISABLED
+    PUSHBUTTON      "Test2",IDC_BUTTON_TEST2,476,183,26,14,WS_DISABLED
+    PUSHBUTTON      "Mean shift segmentation",
+                    IDC_BUTTON_MEAN_SHIFT_SEGMENTATION,190,77,91,14
+    PUSHBUTTON      "Canny",IDC_BUTTON_CANNY,190,20,50,14
+    PUSHBUTTON      "Region props",IDC_BUTTON_REGIONPROPS,15,180,50,14
+    PUSHBUTTON      "LucasKanade Affine",IDC_BUTTON_LKAFFINE,353,115,52,19,
+                    BS_MULTILINE | WS_DISABLED
+    PUSHBUTTON      "Realtime Stereo",IDC_BUTTON_REALTIME_STEREO,355,141,53,
+                    14,WS_DISABLED
+    GROUPBOX        "Image Processing",IDC_STATIC,7,93,169,245
+    GROUPBOX        "Basic",IDC_STATIC,7,7,168,79
+    PUSHBUTTON      "Extract rect",IDC_BUTTON_EXTRACT_RECT,89,22,49,14
+    PUSHBUTTON      "Copy rect",IDC_BUTTON_COPY_RECT,89,43,49,14
+    GROUPBOX        "Computer Vision",IDC_STATIC,185,7,156,219
+    GROUPBOX        "DirectShow Capture (USB cameras)",IDC_STATIC,267,230,
+                    242,108
+    GROUPBOX        "Misc",IDC_STATIC,360,7,91,93
+    GROUPBOX        "Experimental",IDC_STATIC,346,103,163,101
+    LTEXT           "video devices:",IDC_STATIC,278,244,47,8
+    PUSHBUTTON      "&Update",IDC_BUTTON_DSHOW_UPDATE_DEVICES,340,243,35,10
+    CONTROL         "Run face detector",IDC_CHECK_RUN_FACE_DETECTOR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,424,265,82,10
+    PUSHBUTTON      "FFT",IDC_BUTTON_FFT,15,204,50,14
+    PUSHBUTTON      "&Camshift",IDC_BUTTON_CAMSHIFT,293,39,44,14
+    PUSHBUTTON      "Calibrate camera",IDC_BUTTON_CALIBRATE,305,320,80,14
+    PUSHBUTTON      "Fast feature tracker",IDC_BUTTON_FAST_FEATURE_TRACKER,
+                    402,320,70,14
+    PUSHBUTTON      "&Watershed",IDC_BUTTON_WATERSHED,107,134,60,14
+    PUSHBUTTON      "&Warp",IDC_BUTTON_WARP,108,203,50,14
+    PUSHBUTTON      "Chamfer",IDC_BUTTON_CHAMFER,16,225,49,14
+    GROUPBOX        "Other capture",IDC_STATIC,182,307,85,31
+    PUSHBUTTON      "Delaunay",IDC_BUTTON_DELAUNAY,381,41,50,14
+    CONTROL         "Save to file",IDC_CHECK_SAVE_TO_FILE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,424,277,82,10
+    EDITTEXT        IDC_EDIT_SAVE_FNAME_FMT,333,283,84,14,ES_AUTOHSCROLL
+    LTEXT           "filename format:",IDC_STATIC,276,287,50,8
+    PUSHBUTTON      "Horn Schunck",IDC_BUTTON_HORN_SCHUNCK,190,155,50,14
+    PUSHBUTTON      "&Line Fit",IDC_BUTTON_LINEFIT,190,174,50,14
+    CONTROL         "Flip image",IDC_CHECK_FLIP_IMAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,424,288,82,10
+    PUSHBUTTON      "Graph-based segmentation",
+                    IDC_BUTTON_GRAPH_BASED_SEGMENTATION,190,96,91,14
+    PUSHBUTTON      "&Hough",IDC_BUTTON_HOUGH,287,77,50,14
+    PUSHBUTTON      "&Elliptical Head Tracker",
+                    IDC_BUTTON_ELLIPTICAL_HEAD_TRACKER,190,134,77,14
+    PUSHBUTTON      "Block match op flow",IDC_BUTTON_BLOCK_MATCH_OF,267,58,
+                    70,14,WS_DISABLED
+    PUSHBUTTON      "&Fund matrix",IDC_BUTTON_FUNDAMENTAL_MATRIX,293,20,44,
+                    14
+    PUSHBUTTON      "Load AVI",IDC_BUTTON_LOAD_AVI,89,65,50,14,WS_DISABLED
+    PUSHBUTTON      "Chan-Vese",IDC_BUTTON_CHAN_VESE,289,114,50,14
+    PUSHBUTTON      "JPEG memory",IDC_BUTTON_JPEG_MEMORY_TEST,14,65,49,13
+    PUSHBUTTON      "OpenGL",IDC_BUTTON_OPENGL,381,59,50,14
+    PUSHBUTTON      "&Plot",IDC_BUTTON_PLOT,381,77,50,14
+    PUSHBUTTON      "&Invert",IDC_BUTTON_INVERT,107,226,50,14
+    PUSHBUTTON      "&Threshold",IDC_BUTTON_THRESHOLD,109,250,50,14
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "FileDescription", "Demo MFC Application\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "Demo\0"
+            VALUE "LegalCopyright", "Copyright (C) 2004\0"
+            VALUE "OriginalFilename", "Demo.EXE\0"
+            VALUE "ProductName", "Demo Application\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO MOVEABLE PURE 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 228
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
+    END
+
+    IDD_DEMO_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 509
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 338
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    IDS_ABOUTBOX            "&About Demo..."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Demo.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

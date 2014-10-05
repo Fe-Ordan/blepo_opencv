@@ -1,0 +1,36 @@
+SX11 Driver Redistribution Notes (SDK v.2.1)
+
+When installing your application on a target computer it is necessary to copy
+Sensoray DLL(s) and a driver. Under WindowsNT it is also necessary to modify
+the registry.
+
+1. Files required for redistribution.
+The files required for redistribution could be found in the following directories
+on a PC where SX11 SDK was installed:
+DLLs:
+\Program Files\Sensoray\SX11 SDK v.2.1\Lib\sx11.dll
+(or \Program Files\Sensoray\SX11 SDK v.2.1\Lib\NoDDRAW\sx11.dll)
+\Program Files\Sensoray\SX11 SDK v.2.1\Lib\sx11ex.dll (in case Enhanced SDK is used).
+
+Drivers:
+\Program Files\Sensoray\SX11 SDK v.2.1\Drivers\sxdrv98.sys (for Windows98/2000/XP)
+\Program Files\Sensoray\SX11 SDK v.2.1\Drivers\sxdrvnt.sys (for WindowsNT)
+
+
+2. Copying DLL(s).
+On the target computer copy sx11.dll and sx11ex.dll (if required) to
+\Windows\System (Windows98),
+\Windows\System32 (WindowsXP),
+\Winnt\System32 (WindowsNT/2000)
+or your application directory.
+
+3. Installing the drivers.
+On the target computer create a temporary directory and copy the following files to it:
+sxdrv98.sys or sxdrvnt.sys, and sxinstall.exe (which is located in
+\Program Files\Sensoray\SX11 SDK v.2.1\Drivers\).
+Run sxinstall.exe. This program copies the driver file to the corresponding 
+directory and modifies the registry (in case of WindowsNT).
+Reboot the computer.
+
+
+

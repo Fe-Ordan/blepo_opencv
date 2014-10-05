@@ -1,0 +1,272 @@
+<title>Blepo overview</title>
+<center><h1>Blepo Overview</h1></center>
+
+<p>Blepo contains an extensive list of classes and functions for reading/writing image 
+files, displaying images and visualizing data, low-level image processing, 
+higher-level computer vision, and linear algebra.
+The latest version of Blepo contains the following functionality:
+<ul>
+  <li>Images:
+    <ul>
+    <li>image classes (8-bit graylevel, 24-bit blue-green-red, 1-bit binary, 
+    integer, single-precision floating point)</li>
+    <li>load / save image file (BMP, PGM/PPM, JPEG)</li>
+    <li>save image to EPS file (helpful for including images in Latex documents)</li>
+    <li>get / set (individual pixels and rectangular subimages)</li>
+    <li>bitwise logical operations (and, or, xor, not)</li>
+    <li>convert between image types</li>
+    <li>comparison (equal, not equal, less than, greater than, less than or 
+    equal, greater than or equal)</li>
+    <li>resample, downsample, upsample</li>
+    <li>bilinear interpolation</li>
+    </ul>
+    </li>
+  <li>Image processing:
+    <ul>
+    <li>correlation, convolution</li>
+    <li>gradient (Prewitt, Sobel, Gaussian, magnitude)</li>
+    <li>median filter</li>
+	  <li>morphological operations (erode, dilate, grayscale erode and dilate)
+    <li>floodfill
+    <li>connected components
+    <li>Chamfer distance
+	  <li>FFT / inverse FFT
+    </ul>
+    </li>
+  <li>Computer vision:
+    <ul>
+    <li>Lucas-Kanade feature detection and tracking</li>
+    <li>Canny edge detection
+    <li>Viola-Jones face detection</li>
+    <li>Mean shift segmentation</li>
+    <li>Split-and-merge segmentation
+	<li>Watershed segmentation
+    <li>Elliptical head tracking
+	<li>Camera calibration
+    </ul>
+    </li>
+  <li>Matrices:
+    <ul>
+    <li>matrix classes (double-precision floating point)</li>
+    <li>create identity, random matrices</li>
+    <li>diag</li>
+    <li>add, subtract, multiply, negate, transpose matrices</li>
+    <li>Euclidean norm of a vector</li>
+    <li>comparison</li>
+    </ul>
+    </li>
+  <li>Linear algebra:<ul>
+    <li>decomposition (SVD, QR, LU)</li>
+    <li>solve linear equation</li>
+    <li>eigenvalues and eigenvectors</li>
+    <li>determinant, inverse</li>
+  </ul>
+  </li>
+  <li>Display:<ul>
+    <li>easy-to-use figure class</li>
+    <li>display image in window on screen with mouse coordinates</li>
+    <li>resize window</li>
+    <li>get mouse input from image window (with wait, without wait, point, rect, etc.)</li>
+    <li>file open and save directly from window</li>
+    <li>draw line, rect, circle, ellipse, elliptic arc</li>
+  </ul>
+  </li>
+  <li>Capture<ul>
+    <li>real-time capture of live video from single webcam (Logitech Quickcam Pro 4000) using DirectShow</li>
+    <li>real-time capture of live video from single IEEE 1394 camera</li>
+    <li>real-time capture of live video from DataTranslation DT3120 color 
+    framegrabber</li>
+  </ul>
+  </li>
+</ul>
+
+<h2>Design</h2>
+
+All of the 
+source code is written is C/C++, with some low-level operations being written in assembly 
+language to take advantage of computationally efficient SIMD operations (MMX/SSE/SSE2).&nbsp; The 
+library uses the facilities of C++ to automatically handle the allocation and deallocation 
+of memory, thus minimizing the possibility of memory leaks or invalid memory 
+accesses; and yet this management is done in a fairly transparent 
+way, without garbage collection or reference counting, so that programmers who 
+desire control over the details should feel comfortable in knowing at any given 
+time what is happening underneath the hood.&nbsp; Although the code is written primarily in C++, minimal use has been made of 
+advanced C++ facilities (such as generic programming and virtual functions) that 
+have the tendency to make the code opaque.&nbsp; 
+Instead, emphasis has been placed upon simplicity and ease of use, so that even 
+beginning C++ programmers, or advanced C programmers, should find the library 
+painless to learn.&nbsp; An attempt has been made to maintain a clean and 
+consistent interface to facilitate such use.&nbsp; Behind this interface, the 
+actual implementation is a combination of code written from scratch and code 
+borrowed from other open-source libraries, such as OpenCV and the GNU Scientific 
+Library (GSL).</p>
+
+<p>Blepo is designed to meet the following three criteria:
+<ol>
+<li><i><b>Easy to use.</i></b>  A new user should be able to start using the library in a short amount of time, without
+a steep learning curve.  The syntax should be clean, readable, and easy to remember.  Low-level details such as memory management 
+should, as much as possible, be handled automatically.<br><br>
+
+<li><i><b>Efficient.</i></b>  Speed should not be sacrificed in order to achieve ease of use.  Because of the overwhelming
+amount of data in computer vision, the library should be able to process such data efficiently.<br><br>
+
+<li><i><b>Extensive.</i></b>  To maximize the usefulness of the library, its scope should be broad.  Routines for general 
+functions (e.g.,  accessing pixels, reading/writing image files, displaying 
+images, image processing, linear algebra) common to all researchers in the field should be included, 
+as well as higher-level algorithms (e.g., texture, tracking, segmentation, stereo) across the spectrum of computer vision.<br>
+</ol>
+<p>These criteria are achieved through a novel combination of C and C++, taking 
+advantage of the strengths of each.&nbsp; Instead of relying exclusively upon 
+either the procedural paradigm (C) or the object-oriented paradigm (C++), Blepo 
+uses what we call the <i>object-augmented</i> paradigm, which is a combination 
+of both.&nbsp; The concept is rather simple, namely to provide a number of well-designed classes along with functions that operate on 
+those classes.&nbsp; In this manner, some of the functionality resides in the 
+methods of the classes themselves, while other functionality resides in 
+functions outside the classes.&nbsp; 
+
+<p>To illustrate how this works, consider a 
+simple example.&nbsp; Suppose we wish to compute the connected components of an 
+image.&nbsp; In C, the natural way to do this would be to store the image in the 
+struct, which would have to be allocated and deallocated manually.&nbsp; A 
+function would be called to do the work:
+<pre>img_gray* img = alloc_image(320, 240);
+img_int* labels = alloc_image(320, 240);
+connected_components(img, labels);
+free_image(img);
+free_image(labels);
+</pre>
+Having to allocate and deallocate the memory manually is not only tedious but also dangerous because it can easily lead to memory violations 
+or memory leaks.  Moreover, the user has to know how much memory to allocate for the output, which 
+in turn requires 
+knowing something about the connected components algorithm.
+
+<p>
+Using C++, we can hide the memory allocation and deallocation in the constructor and destructor, respectively, leading to much
+cleaner code.  However, in C++'s object-oriented approach, there are three possible
+ways of making connected components a method of a class:
+<table>
+<tr>
+<td><b>Option #1</b>
+<td><b>Option #2</b>
+<td><b>Option #3</b>
+<tr>
+<td>
+<pre>ImgGray img(320, 240);
+ImgInt labels(320, 240);
+img.ConnectedComponents(&labels);
+</pre>
+<td>
+<pre>ImgGray img(320, 240);
+ImgInt labels(320, 240);
+labels.ConnectedComponents(&img);
+</pre>
+<td><pre>ImgGray img(320, 240);
+ImgInt labels(320, 240);
+ConnectedComponentsEngine cc;
+cc.DoIt(img, &labels);
+</pre>
+</table>
+All of these alternatives leave the programmer dissatisfied, because none of them appears to be a natural formulation.
+
+<p>
+Our approach is simply to retain the  classes but provide a function outside them:
+<pre>ImgGray img(320, 240);
+ImgInt labels;
+ConnectedComponents(img, &labels);
+</pre>
+
+
+
+Here, the syntax is clean, and the ordering of the parameters is natural (input 
+before output).&nbsp; Only the memory for the input needs to be allocated before 
+calling the function, because the function itself allocates the memory for the 
+output.&nbsp; (But if the output has already been allocated, then the function 
+skips the allocation, so that no penalty is incurred.)&nbsp; All the memory is 
+automatically deallocated when the objects fall out of scope.&nbsp; Although 
+this memory allocation and deallocation happen automatically, they happen at 
+definite places in the code, so that the user remains in complete control by 
+paying attention to when the constructor and destructor are called.</p>
+
+<p>By passing all images as references or pointers, the 
+resulting code is as efficient as possible.&nbsp; Memory is only allocated when 
+needed, and the user is free to reuse memory that has been allocated.&nbsp; In 
+contrast, reference counting (another option under C++) is not able to guarantee 
+this benefit:&nbsp;&nbsp; </p>
+<pre>ImgGray img(320, 240);
+ImgInt labels = ConnectedComponents(img);
+</pre>
+
+
+
+<p>With reference counting, the function allocates the memory for the output, 
+then the memory is assigned to the variable <tt>'labels'</tt> without reallocating.&nbsp; 
+But because the function does not know about <tt>'labels'</tt>,  it will allocate the 
+memory no matter what, causing an inefficiency when <tt>'labels'</tt> has already 
+been allocated.&nbsp; Reference counting has the added drawback that the 
+assignment operator is unnatural to interpret, because the code <tt>img2 = 
+img1</tt> does not actually copy the data but rather causes both images to point to 
+the same block of data, which is confusing.&nbsp; In Blepo, the assignment 
+operator makes an exact replica of img1, while the built-in C++ mechanism of 
+references is used to cause two variables to point to the same block of data, if 
+that is desired.
+
+<h2>Comparison with other libraries</h2>
+<p>A number of libraries have appeared over the years to facilitate computer 
+vision research, including the following:
+<ol>
+<li><b><a href="http://www.mathworks.com">Matlab.</a></b>  Although designed as a generic platform for matrix analysis, Matlab is popular with computer vision researchers because it is extremely easy to use and is an excellent platform for prototyping quick ideas.  Nevertheless it  is extremely computationally inefficient; its visualization capabilities are not tailored for image sequences; 
+and it is not suited for large projects due to the lack of advanced software 
+features.
+<li><b><a href="http://www.intel.com/research/mrl/research/opencv">OpenCV.</a></b> 
+This open-source library has become the most popular computer vision library to 
+date.&nbsp; It contains scores of useful computer vision functions and runs on Windows or Linux.&nbsp; 
+One drawback is that the code is primarily written in C using structs,  often 
+leaving the user with the burden of mundane low-level tasks such as memory 
+management and type safety.&nbsp; Blepo provides an easy interface to many 
+OpenCV routines.  
+<li><b>IPL.</b>  This library contained an extensive collection of image processing functions 
+(but no computer vision routines), all hand-optimized by Intel programmers for various Pentium processors using MMX assembly language.  Despite being free (no cost), this library was not open-source, and it is no longer available.
+<li><b>IPP.</b>  As the successor to the Image Processing Library (IPL) and the Signal Processing Library (SPL), this library contains a large number of functions for image processing, signal processing, and small matrix analysis, along with a few computer vision routines, all hand-optimized for Pentium processors using MMX, SSE, and SSE2 assembly language.  
+The library is written completely in C, leaving memory management to the user.&nbsp; 
+The library is neither open-source nor free (no cost).
+<li><b><a href="http://cimg.sourceforge.net/">CImg</a>, cool image</b> (David Tschumperl&eacute;).&nbsp; 
+An impressive library written as a single header file with a simple and 
+intuitive interface.&nbsp; Includes functions for file reading/writing, image 
+display, basic image processing, and 3D visualization.&nbsp; It is highly 
+portable and released under the CeCILL-C License license (LGPL-like).
+<li><b><a href="http://vxl.sourceforge.net">vxl.</a></b>  Aiming to be for computer vision 
+what OpenGL is for graphics, this extensive open-source library (including numerics and display 
+as well as image processing and some computer vision) works on Windows or Linux.  
+The extensive use of templates makes for somewhat awkward syntax, 
+there are no SIMD operations for efficient low-level processing, 
+<li><b><a href="http://imlib3d.sourceforge.net">ImLib3D.</a></b>  This is a much smaller library written for 3D medical imaging on Linux.  It has a clean syntax, uses templates and iterators, and interfaces with the shell for non-compiled use. It is released under the GNU GPL.
+<li><b><a href="http://kogs-www.informatik.uni-hamburg.de/~koethe/vigra/">vigra.</a></b>  This small library, written as part of a Ph.D. thesis, explores the application of advanced object-oriented and generic programming techniques such as templates, iterators, functors, and data accessors to computer vision.  These techniques make the code very difficult for an outsider to read or use, and the license is not GPL-compatible.
+<li><b>XVision.</b>
+<li><b>vista.</b>
+<li><b>VisLib.</b>
+<li><b>DARPA IUE.</b>
+<li><b>Khoros</b>
+<li><b>VisionLab</b> (Netherlands)
+<li><b>Diamond3D</b> (MERL)
+<li><b>Microsoft Vision SDK</b>
+<li><b><a href="http://homepages.inf.ed.ac.uk/rbf/HIPR2/hipr_top.htm">HIPR</a></b>
+-- Hypermedia Image Processing Reference, Java
+<li><b>LTI-Lib</b>
+<li><b>CMVision</b>
+<li><b>BV-Tool</b> (split and merge)
+<li><b><a href="http://opensource.adobe.com/gil/">Generic Image Library (GIL)</a></b> from Adobe
+<li><b>Imalab</b> (Augustin Lux, Machine Vision and Applications 2004)
+<li><b><a href="http://www.barissumengen.com/cimpl/">CIMPL Numerical Performance Library</a></b> (Baris Sumengen) Efficient and easy to use.  Version 0.1.
+<li><b><a href="http://www.smalleranimals.com/isource.htm">ImgSource.</a></b>  A commercial
+image processing package for reading/writing images, displaying them on the screen, and
+manipulating them for human viewing.
+<li><b><a href="http://www.ee.siue.edu/CVIPtools">CVIPtools</b></a>
+<li><b><a href="http://www.itk.org/">ITK</a> </b>
+<li><b>
+<a href="http://www.ee.surrey.ac.uk/Research/VSSP/RavlDoc/share/doc/RAVL/Auto/Basic/Tree/Ravl.Introduction.html">
+RAVL</a> (Recognition and Vision Library)</b><li><b>
+<a href="http://www.boost.org/">Boost generic image library</a></b><li><b>
+<a href="http://www.uni-koblenz.de/~jesus/asi/index.php?option=com_frontpage&Itemid=1">
+AllSeeingI (ASI).</a></b>&nbsp; Visual programming environment.<b><li><a href="http://www.freeprogrammingresources.com/imglib.html">Etc.</a> (ImageLib, VTK, ...)</b> 
+<a href="http://www.roborealm.com/links/vision_software.php">Extensive list of vision software</a>
+</ol>

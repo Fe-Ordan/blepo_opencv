@@ -1,0 +1,1 @@
+This folder contains files from OpenCV 1.0.  The only reason it remains here is because Visual Studio 6.0 does not work with OpenCV 2.0.

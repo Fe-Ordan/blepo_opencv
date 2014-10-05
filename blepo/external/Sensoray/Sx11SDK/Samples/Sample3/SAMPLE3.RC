@@ -1,0 +1,53 @@
+/******************************************
+ * SAMPLE1.RC resource script
+ ******************************************/
+
+#include "sample3.h"
+
+Sample3 MENU
+{
+    POPUP "&File"
+    {
+        MENUITEM "&Save...",            FG_SAVE
+                MENUITEM SEPARATOR
+        MENUITEM "E&xit",               FG_EXIT
+    }
+    
+    POPUP "&Acquisition"
+    {
+        MENUITEM "&Start",              FG_START
+        MENUITEM "Sto&p",               FG_STOP
+    }
+    
+    POPUP "&Scale"
+    {
+        MENUITEM "8",                   FG_SCALE8
+        MENUITEM "6",                   FG_SCALE6
+        MENUITEM "4",                   FG_SCALE4
+        MENUITEM "2",                   FG_SCALE2
+    }
+    
+    POPUP "&Color"
+    {
+        MENUITEM "Monochrome",          FG_MONO
+        MENUITEM "Color",               FG_COLOR
+    }
+
+    POPUP "C&hannel"
+    {
+        MENUITEM "S-Video",             FG_CHAN0
+        MENUITEM "Video1",              FG_CHAN1
+        MENUITEM "Video2",              FG_CHAN2
+        MENUITEM "Video3",              FG_CHAN3
+        MENUITEM "Video4",              FG_CHAN4
+    }
+
+    POPUP "Fo&rmat"
+    {
+        MENUITEM "&NTSC",                FG_NTSC
+        MENUITEM "&PAL/SECAM",           FG_PALSECAM
+    }
+}
+
+ICONX11 ICON    sx11.ico
+

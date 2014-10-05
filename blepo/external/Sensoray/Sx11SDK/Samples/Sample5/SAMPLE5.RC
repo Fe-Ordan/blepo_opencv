@@ -1,0 +1,32 @@
+/******************************************
+ * SAMPLE5.RC resource script
+ ******************************************/
+
+#include "sample5.h"
+
+Sample5 MENU
+{
+    POPUP "&File"
+    {
+        MENUITEM "E&xit",               FG_EXIT
+    }
+    
+    POPUP "&Acquisition"
+    {
+        MENUITEM "&Start",              FG_START
+        MENUITEM "Sto&p",               FG_STOP
+    }
+    
+    POPUP "C&hannel"
+    {
+        MENUITEM "S-Video",             FG_CHAN0
+        MENUITEM "Video1",              FG_CHAN1
+        MENUITEM "Video2",              FG_CHAN2
+        MENUITEM "Video3",              FG_CHAN3
+        MENUITEM "Video4",              FG_CHAN4
+    }
+    
+}
+
+ICONX11 ICON    sx11.ico
+

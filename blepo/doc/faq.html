@@ -1,0 +1,56 @@
+<title>Blepo FAQ</title>
+<center><h1>Frequently Asked Questions (FAQ)</h1></center>
+
+<ol>
+<li><b>Is there really a need for yet another computer vision library?</b><br>
+Computer vision researchers generally have three choices available to them:
+(1) use Matlab, (2) write code from scratch, or (3) use an existing 
+library.  While Matlab is unsurpassed for rapid prototyping, it is not suitable
+for real-time projects or for algorithms whose inefficient implementations extend
+their running times into hours or days.  Matlab also lacks facilities (e.g., multiple
+functions per file, encapsulation, etc.) for applying sound software engineering
+practices to better organize large projects.  Writing code from scratch requires 
+each researcher to reinvent the wheel
+by implementing tedious low-level operations.  It also limits researchers to
+studying relatively isolated problems and prevents them from building on each 
+other's work, because there is not enough time to combine or re-implement
+the different algorithms into a complex system.  There exist several very good computer 
+vision libraries to solve this problem.  However, in an attempt to provide a library that
+is easy to use, efficient, and extensive, Blepo was written from the ground up using C++ principles, 
+while also wrapping many functions in OpenCV.<br><br>
+
+<li><b>Where does the name Blepo come from?</b><br>
+<i>Blepo</i> (&beta;&lambda;&epsilon;&pi;&omega;) is the Greek word meaning, "to see," which is an apt description of the goal of computer vision.&nbsp; 
+It is pronounced with a short 'e' and a long 'o', rhyming with "step toe".<br><br>
+
+<li><b>What is the license?</b><br>
+Blepo is released under the GNU General Public License (GPL), the same license used by GNU/Linux.  Basically
+this means that you are free to use and modify the library all you want, but you may not distribute any work based on your changes
+without also sharing the source code for those changes.  This, of course, is not meant to be taken as the 
+official, legal definition, which can be found <a href="http://www.gnu.org/copyleft/gpl.html">here</a>.<br><br>
+
+<li><b>In what language is Blepo written?</b><br>
+Blepo is primarily written in C/C++, with some of the low-level routines being 
+written in assembly language to take advantage of the significant speedup 
+available using SIMD 
+processing (in particular, MMX/SSE/SSE2). In the future, we hope to provide an 
+interface to the library from higher-level languages (scripting languages, Matlab, etc.)
+to facilitate rapid prototyping of algorithms.<br><br>
+
+<li><b>On what platforms is Blepo supported?</b><br>
+Blepo currently compiles using Microsoft Visual Studio 2005/2008/2010 or Microsoft Visual C++ 6.0.&nbsp; 
+The code is written with portability in mind, but the Figure class and the 
+camera capture classes use Windows-specific calls.&nbsp; Although it would be 
+possible to support other compilers and operating systems in the future, the 
+near-term goal is to maintain a clean, stable, useful library on a single 
+platform.<br><br>
+
+<li><b>What is the current status of Blepo?</b><br>
+An alpha version of Blepo is available.  The library contains basic image classes, along with routines for loading/storing image
+files, capturing images from cameras, and displaying images on the screen.  Some basic image processing functions and linear algebra 
+functions are also available.  The functions described in the Reference Manual have generally been tested, are stable, and have 
+interfaces that are unlikely to change significantly.  Any functions inside the code
+that are not captured in the manual, as well as the code organization itself, are
+subject to major revisions.<br><br>
+
+</ol>

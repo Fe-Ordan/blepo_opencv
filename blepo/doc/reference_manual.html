@@ -1,0 +1,1374 @@
+<title>Blepo reference manual</title>
+<center><h1>Blepo Reference Manual</h1></center>
+
+Topics:
+<ol>
+<li><a href="#preliminaries">Preliminaries</a>
+<li><a href="#classes">Fundamental classes and structs</a>
+<li><a href="#image_ops">Image operations</a>
+<li><a href="#image_processing">Image processing</a>
+<li><a href="#computer_vision">Computer vision</a>
+<li><a href="#matrix_ops">Matrix operations</a>
+<li><a href="#linear_algebra">Linear algebra</a>
+<li><a href="#figure">Figure</a>
+<li><a href="#capture">Capture</a>
+</ol>
+
+<p>
+<hr>
+<a name="preliminaries">
+<center><h2><u>Preliminaries</u></h2></center>
+
+<p>
+The purpose of this reference manual is to provide information about the
+most useful and stable classes and functions, in an easy-to-read format.
+Although the library is still in a state of development, the interfaces captured
+here are not expected to change significantly (if at all), and the functionality
+captured here has been tested at least to a moderate degree.  While users should 
+also feel free to use any additional functions they find in the 
+header files themselves, keep in mind that such functions are less well tested and
+are more likely to have their interfaces changed in the future.
+
+<p>
+The library follows the convention of passing <i>inputs</i> as const references
+(except for native types, which are passed by value), 
+<i>outputs</i> as pointers (after the inputs), and <i>input-outputs</i> as pointers at the 
+beginning.  Of course, due to C++ restrictions, parameters with default values 
+(even if they are inputs) always come last.
+Examples:
+<pre>  void Foo1(const A& a, A* b);            // 'a' is input, 'b' is output
+  void Foo2(const A& a, B* b, int c=0);   // same but with a default value for the last parameter
+  void Foo3(B* b, const A& a);            // 'b' is both input and output
+</pre>
+This syntax, similar to that used by <tt>printf()</tt>
+and <tt>scanf()</tt> in C, makes code more readable because you can immediately tell whether
+a parameter is changed by a function simply by looking at whether its pointer is
+passed.  For example, we can tell by immediate inspection that the second line of this code
+does not modify <tt>img1</tt>, even without knowing anything about the semantics of 
+the function:
+<pre>  ImgGray img1, img2;
+  Func(img1, &img2);                     // does not modify 'img1'
+</pre>
+
+<p>
+The library automatically handles the allocation / reallocation, if necessary, of 
+the internal data of <i>outputs</i>, so all you need to do is pass a valid pointer.  
+For example, just pass a pointer to an image without first specifying its size.
+On the other hand, <i>input-outputs</i> are parameters whose internal values may 
+change (perhaps as a function of their input values) but 
+whose size remains constant.  
+
+<p>
+Many of the functions check to see whether 
+the operation is being performed in place.  For example, suppose we call the function
+above with the same value being passed as input and output:
+<pre>  A a;
+  Foo1(a, &a);   // 'in-place' operation
+</pre>
+In this case the output pointer passed to the function points to the input parameter, 
+but the function will work correctly nevertheless.  Keep in mind that some of the 
+functions can be efficiently implemented in place, in which case the function will do
+so; while other functions require the allocation of a temporary variable to store the
+intermediate results.  In the latter case, the in-place operation provides convenience
+for the user, but perhaps at the expense of computational overhead.
+
+<p>
+In the functions below, <tt>src</tt> is used for <i>inputs</i>, <tt>dst</tt> for <i>outputs</i>,
+and <tt>src_dst</tt> for <i>input-outputs</i>.  
+For brevity, the notation <tt>ImgX</tt> is used when a function is implemented for
+multiple image types.  
+
+
+
+
+<p>
+<hr>
+<a name="classes">
+<center><h2><u>Fundamental Classes and Structs</u></h2></center>
+
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Image</h2>
+</table>
+
+<p><b><u>Overview</u></b>
+
+<p>There are five image classes, all derived from a base templated class <tt>Image</tt>:
+<pre>    <b>ImgGray</b> : Image&lt;unsigned char&gt;    graylevel image (one byte per pixel)
+    <b>ImgBgr</b> : Image&lt;Bgr&gt;               blue-green-red color image (three bytes per pixel)
+    <b>ImgBinary</b> : Image&lt;bool&gt;           packed binary image (one bit per pixel)
+    <b>ImgInt</b> : Image&lt;int&gt;               integer image (machine dependent, but usually 4 bytes per pixel)
+    <b>ImgFloat</b> : Image&lt;float&gt;             single-precision floating-point image (4 bytes per pixel)
+</pre>
+
+<p>
+The image data are stored in memory as contiguous pixels, in row major order with no padding between rows.
+For multi-channel images, the channels are interleaved; e.g., the pixels in <b><tt>ImgBgr</tt></b>
+are <tt>&lt;B0, G0, R0, B1, G1, R1, ...&gt;</tt>.  For <b><tt>ImgBinary</tt></b>,
+the first pixel is stored in the most significant bit of the first byte, the ninth pixel is
+stored in the most significant bit of the second byte, and so forth; if the total number of pixels is not a multiple
+of 8, then the last byte contains unused bits.
+
+<p>
+The <tt>Bgr</tt> struct is described below in detail, but it basically contains three 
+unsigned chars:  <tt>struct Bgr { unsigned b, g, r };</tt>
+
+<p><b><u>Members</u></b>
+
+<pre>    <b>Typedefs:</b>
+      <b>Pixel</b>                                            a pixel (unsigned char, int, float, bool, Bgr, ...)
+      <b>Iterator</b>                                         generalized pointer to a pixel
+      <b>ConstIterator</b>                                    constant generalized pointer to a pixel
+    <b>Constants:</b>
+      int <b>NBITS_PER_PIXEL</b>                              number of bits per pixel
+      int <b>NCHANNELS</b>                                    number of channels
+      Pixel <b>MIN_VAL</b>                                    minimum pixel value 
+      Pixel <b>MAX_VAL</b>                                    maximum pixel value 
+    <b>Info:</b>
+      int <b>Width()</b> const                                returns the width
+      int <b>Height</b>() const                               returns the height
+      int <b>NBytes</b>() const                               returns the number of bytes
+    <b>Pixel data:</b>
+      const Pixel& <b>operator</b>()(int x, int y) const      access a pixel (read only)
+      Pixel& <b>operator</b>()(int x, int y)                  access a pixel (read / write)
+      ConstIterator <b>Begin</b>() const                      return iterator to first pixel (read only)
+      ConstIterator <b>Begin</b>(int x, int y) const          return iterator to pixel (x,y) (read only)
+      ConstIterator <b>End</b>() const                        return iterator to just past last pixel (read only)
+      Iterator <b>Begin</b>()                                 return iterator to first pixel (read / write)
+      Iterator <b>Begin</b>(int x, int y)                     return iterator to pixel (x,y) (read / write)
+      Iterator <b>End</b>()                                   return iterator to just past last pixel (read / write)
+      const unsigned char* <b>BytePtr</b>() const             return pointer to first byte (same as Begin() typecast to unsigned char*)
+      unsigned char* <b>BytePtr</b>()                         return pointer to first byte (same as Begin() typecast to unsigned char*)
+    <b>Constructor / destructor / etc.</b>	  
+      <b>Image</b>()                                          create empty (0 x 0) image
+      <b>Image</b>(int width, int height)                     create width x height image (uninitialized values)
+      <b>Image</b>(const Image& other)                        make an exact replica (with a separate copy of the data)
+      <b>~Image()</b>                                         destroy image (free up all memory)
+      Image& <b>operator</b>=(const Image& other)             make an exact replica (with a separate copy of the data)
+      void <b>Reset</b>(int width, int height)                resizes image to width x height (does not initialize values),
+                                                              -- does nothing if width x height image already allocated
+      void <b>Reset</b>()                                     free memory for image data
+                                                              -- does nothing if image is already empty
+</pre>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Matrix</h2>
+</table>
+
+<p>There are two matrix classes, 
+all derived from a base templated class <tt>Matrix</tt>:
+<pre>    <b>MatFlt</b> : Matrix&lt;float&gt;    single-precision floating point matrix (32 bits per element)
+    <b>MatDbl</b> : Matrix&lt;double&gt;   double-precision floating point matrix (64 bits per element)
+</pre>
+
+The interface to the matrix class is very similar to the image class.  
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Bgr</h2>
+</table>
+
+<pre>  struct Bgr { unsigned b, g, r };
+</pre>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Point / Rect</h2>
+</table>
+
+Currently, 
+<pre>    typedef CPoint Point
+    typedef CRect Rect
+</pre>
+In the future, they may be reimplemented, but their interfaces should remain consistent 
+with those of the MFC classes.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Exception</h2>
+</table>
+
+The <tt>Exception</tt> class has only one method:  
+<pre>  <tt>Display()</tt>  display the human-readable string in a message box.
+</pre>
+
+Note:  If you would like to throw an <tt>Exception</tt> yourself, pass a 
+human-readable string to the 
+macro <tt>BLEPO_ERROR()</tt>.  To format the string in the same line, using <tt>StringEx</tt>:
+<pre>    BLEPO_ERROR("Out of bounds");
+    BLEPO_ERROR(StringEx("Unable to open file %s", filename));
+</pre>
+
+<p>
+<hr>
+<a name="image_ops">
+<center><h2><u>Image Operations</u></h2></center>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Load</h2>
+</table>
+
+<pre>  void Load(const char* filename, ImgBgr* out);
+  void Load(const char* filename, ImgGray* out);
+</pre>
+
+Loads an image from a file into <tt>out</tt>, allocating memory for <tt>out</tt>.  Supported file 
+formats:  BMP, PGM (binary), PPM (binary), JPEG.  The file type is determined automatically by
+the magic number in the file (ignoring the file extension).
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Save</h2>
+</table>
+
+<pre>  void Save(const ImgBgr& img, const char* filename, const char* filetype = NULL);
+  void Save(const ImgGray& img, const char* filename, const char* filetype = NULL);
+</pre>
+
+Saves an image to a file.  Supported file formats:  BMP, PGM (binary), PPM (binary), JPEG.  
+The image type is determined automatically by the extension of <tt>filename</tt> (".bmp",
+".pgm", ".ppm", ".jpg", or ".jpeg").  If the filename has a nonstandard extension,
+pass the standard extension as an optional third parameter (without the period).  For example,
+<pre>  Save(img, "file.jaypegg", "jpg");
+</pre>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Convert</h2>
+</table>
+
+<pre>  void Convert(const ImgX& img, ImgY* out);
+</pre>
+
+Converts between two image types, allocating memory for <tt>out</tt>.  <tt>ImgX</tt> and <tt>ImgY</tt>
+may be any pair of distinct image types, with the following meaning:
+<pre>  ImgGray   -> ImgBgr     replicates graylevel value three times
+  ImgGray   -> ImgInt     copies values
+  ImgGray   -> ImgFloat     copies values
+  ImgGray   -> ImgBinary  sets nonzero pixels to 1, zero pixels to 0
+  ImgInt    -> ImgGray    clips values outside [0, 255]
+  ImgInt    -> ImgFloat     copies values
+  ImgInt    -> ImgBgr     varies (see below)
+  ImgInt    -> ImgBinary  same as ImgInt -> ImgGray -> ImgBinary
+  ImgFloat    -> ImgGray    rounds values, then clips to [0, 255]
+  ImgFloat    -> ImgInt     rounds values
+  ImgFloat    -> ImgBgr     same as ImgFloat -> ImgGray -> ImgBgr
+  ImgFloat    -> ImgBinary  same as ImgFloat -> ImgGray -> ImgBinary
+  ImgBgr    -> ImgGray    uses (1*B + 6*G + 3*R)/10
+  ImgBgr    -> ImgInt     varies (see below)
+  ImgBgr    -> ImgFloat     same as ImgBgr -> ImgGray -> ImgFloat
+  ImgBgr    -> ImgBinary  same as ImgBgr -> ImgGray -> ImgBinary
+  ImgBinary -> ImgGray    sets 0 to zero, 1 to 255
+  ImgBinary -> ImgInt     sets 0 to zero, 1 to one
+  ImgBinary -> ImgFloat     sets 0 to zero, 1 to one
+  ImgBinary -> ImgBgr     sets 0 to zero, 1 to Bgr(255,255,255)
+</pre>
+
+<p>
+The functions converting between <tt>ImgBgr</tt> and <tt>ImgInt</tt> require a third 
+parameter to indicate the format of the integer:
+<ul>
+<li><tt>BLEPO_BGR_XBGR</tt>:  lower four bytes of integer are interpreted as <tt>0xXXBBGGRR</tt>
+<li><tt>BLEPO_BGR_XRGB</tt>:  lower four bytes of integer are interpreted as <tt>0xXXRRGGBB</tt>
+<li><tt>BLEPO_BGR_GRAY</tt>:  lower four bytes of integer are interpreted as <tt>0xXXXXXXgg</tt>
+</ul>
+Here <tt>X</tt> means "don't care", and <tt>gg</tt> is a single byte graylevel value.  The last
+of these options is the same as converting to an <tt>ImgGray</tt> as an intermediary representation.
+
+<p>
+In addition, the functions converting from <tt>ImgBinary</tt> require two 
+additional parameters:  the zerovalue and the onevalue.  For example, to set 
+all the 0 pixels to blue and all the 1 pixels to red, use the following:
+<pre>  Convert(img_binary, &img_bgr, Bgr(255,0,0), Bgr(0,0,255));
+</pre>
+
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Threshold</h2>
+</table>
+
+<pre>  void Threshold(const ImgX& img, ImgX::Pixel threshold, ImgBinary* out);
+</pre>
+
+<p>
+Thresholds an image, setting the dimensions of <tt>out</tt> to those of
+<tt>img</tt>.  Pixels greater than or equal to <tt>threshold</tt> are set to 1,
+otherwise to 0.  
+
+<p>
+Defined for <tt>ImgGray, ImgInt, ImgFloat</tt>.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Set</h2>
+</table>
+
+<pre>  void Set(ImgX* out, ImgX::Pixel val);
+  void Set(ImgX* out, const Rect& rect, ImgX::Pixel val);
+  void Set(ImgX* out, const ImgBinary& mask, ImgX::Pixel val);
+  void Set(ImgX* out, const Point& pt, const ImgX& img);
+  void Set(ImgX* out, const Point& pt, const ImgX& img, const Rect& rect);
+  void SetOutside(ImgX* out, const Rect& rect, ImgX::Pixel val);
+</pre>
+
+<p>
+Sets the pixels in <tt>out</tt> to the value <tt>val</tt>.  Does not change the 
+dimensions of <tt>out</tt>.  These six versions, respectively,
+<ul>
+<li>set all the pixels
+<li>set only the pixels within <tt>rect</tt>
+<li>set only the pixels specified in <tt>mask</tt>
+<li>copy all the values in <tt>img</tt> to <tt>out</tt> at the top-left corner <tt>pt</tt>
+<li>copy only the pixels within <tt>rect</tt> of <tt>img</tt> to <tt>out</tt> 
+at the top-left corner <tt>pt</tt>
+<li>set only the pixels outside <tt>rect</tt>
+</ul>
+Note that <tt>out</tt> must be larger than <tt>img</tt>, unless <tt>pt</tt> is <tt>(0,0)</tt>.
+
+<p>
+Defined for all image types.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Extract</h2>
+</table>
+
+<pre>  void Extract(const ImgX& img, const Rect& rect, ImgX* out);
+</pre>
+
+<p>
+Copies the values in <tt>rect</tt> of <tt>img</tt> to <tt>out</tt>, resizing the latter
+to the size of the rectangle.
+
+<p>
+Defined for all image types.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>IsSameSize</h2>
+</table>
+
+<pre>  bool IsSameSize(const ImgX& img1, const ImgY& img2);
+</pre>
+
+<p>
+Returns whether two images have the same dimensions.
+
+<p>
+Defined for all image types.  Images may be of the same or different types.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>IsIdentical</h2>
+</table>
+
+<pre>  bool IsIdentical(const ImgX& img1, const ImgX& img2);
+</pre>
+
+<p>
+Returns whether two images have the same dimensions and the exact same data.
+
+<p>
+Defined for all image types.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Comparison</h2>
+</table>
+
+<pre>  void Equal(const ImgX& img1, const ImgX& img2, ImgBinary* out);
+  void NotEqual(const ImgX& img1, const ImgX& img2, ImgBinary* out);
+  void LessThan(const ImgFloat& img1, const ImgFloat& img2, ImgBinary* out);
+  void GreaterThan(const ImgX& img1, const ImgX& img2, ImgBinary* out);
+  void LessThanOrEqual(const ImgX& img1, const ImgX& img2, ImgBinary* out);
+  void GreaterThanOrEqual(const ImgX& img1, const ImgX& img2, ImgBinary* out);
+</pre>
+
+<p>
+Sets a binary image based upon a pixel-wise comparison of two images, resizing
+<tt>out</tt> to the same size as the input images (which must be of the same size).
+
+<p>
+<tt>Equal, NotEqual</tt> are defined for all image types.  The other functions
+are defined only for <tt>ImgGray, ImgInt, ImgFloat</tt>.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Min / Max</h2>
+</table>
+
+<pre>  ImgX::Pixel Min(const ImgX& img);
+  ImgX::Pixel Max(const ImgX& img);
+  void MinMax(const ImgX& img, ImgX::Pixel* minn, ImgX::Pixel* maxx);
+  void Min(const ImgX& img1, const ImgX& img2, ImgX* out);
+  void Max(const ImgX& img1, const ImgX& img2, ImgX* out);
+</pre>
+
+<p>
+The first two functions return the min or max value of an image.  The next function
+computes the min and max simultaneously and is more efficient if both are needed
+(because only one pass through the image data is performed).  The last two functions
+set <tt>out</tt> to the pixel-wise min or max of the two images, resizing <tt>out</tt>
+to the same size as the input images (which must be of the same size).
+
+<p>
+Defined for <tt>ImgGray, ImgInt, ImgFloat</tt>.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Logical operations</h2>
+</table>
+
+<pre><b>Two input images:</b>
+  void And(const ImgX& img1, const ImgX& img2, ImgX* out);
+  void Or (const ImgX& img1, const ImgX& img2, ImgX* out);
+  void Xor(const ImgX& img1, const ImgX& img2, ImgX* out);
+<b>One input image and a binary mask:</b>
+  void And(const ImgX& img1, const ImgBinary& mask, ImgX* out);
+  void Or (const ImgX& img1, const ImgBinary& mask, ImgX* out);
+  void Xor(const ImgX& img1, const ImgBinary& mask, ImgX* out);
+<b>One input image and a constant value:</b>
+  void Not(const ImgX& img, ImgX* out);
+  void And(const ImgX& img, ImgX::Pixel val, ImgX* out);
+  void Or (const ImgX& img, ImgX::Pixel val, ImgX* out);
+  void Xor(const ImgX& img, ImgX::Pixel val, ImgX* out);
+</pre>
+
+<p>
+Sets <tt>out</tt> by applying a bitwise logical operator to an image or pair of
+images.  The two input images must be of the same size.  
+
+<p>
+Notes:
+<ul>
+<li>"Inplace" is supported, so <tt>out</tt> may point to either of the inputs.
+<li>Defined for <tt>ImgBinary, ImgGray, ImgInt, ImgBgr</tt>.
+<li>Optimized for MMX / SSE2.
+</ul>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Arithmetic operations</h2>
+</table>
+
+<pre>  void Add     (const ImgX& img1, const ImgX& img2, ImgX* out);
+  void Subtract(const ImgX& img1, const ImgX& img2, ImgX* out);
+  void AbsDiff (const ImgX& img1, const ImgX& img2, ImgX* out);
+  void Multiply(const ImgX& img1, const ImgX& img2, ImgX* out);
+  void Multiply(const ImgX& img1, const ImgX::Pixel& img2, ImgX* out);
+  void Divide  (const ImgX& img1, const ImgX::Pixel& img2, ImgX* out);
+  void LinearlyScale(const ImgX& img, ImgX::Pixel minval, ImgX::Pixel maxval, ImgX* out);
+</pre>
+
+<p>
+Applies a pixel-wise arithmetic operator to an image or pair of
+images.  The two input images must be of the same size.  <tt>LinearlyScale</tt>
+scales the image so that its minimum value is 'minval' and maximum value is 'maxval'.
+
+<p>
+Notes:
+<ul>
+<li>"Inplace" is supported, so <tt>out</tt> may point to either of the inputs.
+<li>Defined for <tt>ImgGray, ImgInt, ImgBgr, ImgFloat</tt>.
+<li>For <tt>ImgGray</tt> and <tt>ImgBgr</tt>, operations are performed with saturation.
+<li>Optimized for MMX / SSE2 (some operations)
+<li>**** Multiply is only for int and float
+<li>**** Need functions with constants, too
+</ul>
+
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Resampling</h2>
+</table>
+
+<pre>  void Resample(const ImgX& img, int new_width, int new_height, ImgX* out);
+  void Upsample(const ImgX& img, int factor_x, int factor_y, ImgX* out);
+  void Downsample(const ImgX& img, int factor_x, int factor_y, ImgX* out);
+</pre>
+
+<p>
+Creates an image with new dimensions from an existing image.  
+<tt>Resample</tt> is the most general function because it can create an image with
+arbitrary dimensions.  <tt>Upsample</tt> and <tt>Downsample</tt> can create an image
+whose dimensions are an integral multiple of the original image.  The factors must
+be positive.
+
+<p>
+Defined for all image types.
+
+<p>
+Note:  Only nearest-neighbor interpolation is supported for these functions.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Interpolation</h2>
+</table>
+
+<pre>  ImgX::Pixel Interp(const ImgX& img, float x, float y);
+</pre>
+
+<p>
+Performs bilinear interpolation at a single pixel.  Defined for all image types.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Display image</h2>
+</table>
+
+<pre>  void Draw(const ImgX& img, HDC hdc, int x, int y);
+  void Draw(const ImgX& img, HDC hdc, const Rect& src, const Rect& dst);
+</pre>
+
+<p>
+Draws an image onto a Windows device context (Note:  A <tt>CDC</tt> may be substituted for
+an <tt>HDC</tt>).  The first function draws the image at a specified location with no stretching of the
+image.  The second function draws an arbitrary rectangle of the image onto an arbitrary
+rectangle of the device context, automatically stretching the image to fit the destination
+rectangle.  
+
+<p>
+Defined for all image types.  Binary, float, and int images
+are linearly scaled to map their inputs to the range [0,255].
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Draw onto image</h2>
+</table>
+
+<pre>  void DrawDot(const Point& pt, ImgX* out, const X& color, int size = 3);  // draws a filled-in square
+  void DrawLine(const Point& pt1, const Point& pt2, ImgX* out, const X& color, int thickness=1);
+  void DrawRect(const Rect& rect, ImgX* out, const X& color, int thickness=1);
+  void DrawCircle(const Point& center, int radius, ImgX* out, const X& color, int thickness=1);
+  void DrawEllipse(const Point& center, int major_axis, int minor_axis, double angle, ImgX* out, const X& color, int thickness=1);
+  void DrawEllipticArc(const Point& center, int major_axis, int minor_axis, double angle, double start_angle, double end_angle, ImgX* out, const X& color, int thickness=1);
+</pre>
+
+<p>
+Draws a dot, line, rectangle, circle, ellipse, or elliptic arc, respectively, on an image.
+Implementation uses OpenCV functions.
+
+<p>
+<pre>  class TextDrawer:
+    TextDrawer(int height=15, int thickness=2);
+    void DrawText(ImgBgr* img, const char* text, const Point& pt, const Bgr& color);
+    void DrawText(ImgBgr* img, const char* text, const Point& pt, const Bgr& color, const Bgr& background_color);
+</pre>
+
+<p>
+Draws text onto an image.
+
+<p>
+<hr>
+<a name="image_processing">
+<center><h2><u>Image Processing</u></h2></center>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Morphological operations</h2>
+</table>
+
+<pre>binary morphology:
+  void Erode3x3      (const ImgGray& img, ImgGray* out);
+  void Dilate3x3     (const ImgGray& img, ImgGray* out);
+  void Erode3x3Cross (const ImgGray& img, ImgGray* out);
+  void Dilate3x3Cross(const ImgGray& img, ImgGray* out);
+grayscale morphology:
+  void GrayscaleErode3x3 (const ImgGray& img, int offset, ImgGray* out);
+  void GrayscaleDilate3x3(const ImgGray& img, int offset, ImgGray* out);
+</pre>
+
+<p>
+Performs dilation or erosion with one of the following 3 x 3 kernels:
+
+<pre>   1 1 1             0 1 0
+   1 1 1             1 1 1
+   1 1 1             0 1 0
+                    (cross)
+</pre>
+
+<p>
+The binary functions treat the input image as a binary image and 
+are optimized for MMX.  The grayscale functions use a 3x3 structuring
+element of all ones, multiplied by 'offset' (which should be non-negative).
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Convolution / Gradient / Smoothing / etc.</h2>
+</table>
+
+<pre>  void SmoothGauss5x5(const ImgGray& img, ImgGray* out);
+  void GradMagPrewitt(const ImgGray& img, ImgGray* out);
+  void GradPrewittX(const ImgGray& img, ImgFloat* out);
+  void GradPrewittY(const ImgGray& img, ImgFloat* out);
+  void GradPrewitt (const ImgGray& img, ImgFloat* gradx, ImgFloat* grady);
+  void Smooth  (const ImgFloat& img, float sigma, int kernel_length, ImgFloat* img_smoothed);
+  void Smooth  (const ImgFloat& img, float sigma, ImgFloat* img_smoothed);
+  void Gradient(const ImgFloat& img, float sigma, int kernel_length, ImgFloat* gradx, ImgFloat* grady);
+  void Gradient(const ImgFloat& img, float sigma, ImgFloat* gradx, ImgFloat* grady);
+</pre>
+
+<p>
+**** Mention borders.  Mention efficiency.  Add functions to use MMX routines
+we already have implemented.  <tt>Gradient</tt> uses the derivative of a Gaussian.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Connected components</h2>
+</table>
+
+<pre>  void ConnectedComponents4(const ImgBgr   & img, ImgInt* labels);
+  void ConnectedComponents4(const ImgBinary& img, ImgInt* labels);
+  void ConnectedComponents4(const ImgGray  & img, ImgInt* labels);
+  void ConnectedComponents4(const ImgInt   & img, ImgInt* labels);
+</pre>
+
+<p>
+Computes the connected components of an image using 4 neighbors.  An optional third argument, of type
+<tt>std::vector<ConnectedComponentProperties<ImgX::Pixel> >* props</tt> will cause
+properties of the regions to be computed as well.  Example:
+<pre>  ImgGray img;
+  ImgInt labels;
+  std::vector< ConnectedComponentProperties&lt;ImgGray::Pixel&gt;<ImgGray::Pixel> > reg;  		// pixel type must match input image type
+  ConnectedComponents4(img, &labels, &(reg));
+</pre>
+Note:  <tt>ConnectedComponents8</tt> performs the operation using 8 neighbors.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Floodfill</h2>
+</table>
+
+<pre>  void FloodFill4(const ImgX& img, int seed_x, int seed_y, ImgX::Pixel new_color, ImgX* out);
+  void FloodFill8(const ImgX& img, int seed_x, int seed_y, ImgX::Pixel new_color, ImgX* out);
+</pre>
+
+<p>
+Performs floodfill on an image.  All the pixels that are adjacent to the pixel
+<tt>img(seed_x, seed_y)</tt> and which have the same color as it in <tt>img</tt>, 
+are colored <tt>new_color</tt> in the output image <tt>out</tt>.  If <tt>out</tt>
+is already the same size as <tt>img</tt>, then only the flooded pixels are touched;
+otherwise it is automatically resized first.
+
+<p>
+Inplace is supported.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Chamfer</h2>
+</table>
+
+<pre>  void Chamfer(const ImgGray& img, ImgInt* chamfer_dist);
+</pre>
+
+<p>
+Computes the Chamfer distance of a binary image (i.e., Manhattan distances
+to the non-zero pixels in the input image).
+
+
+<p>
+<hr>
+<a name="computer_vision">
+<center><h2><u>Computer Vision</u></h2></center>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>FaceDetect</h2>
+</table>
+
+<pre>  class FaceDetector
+</pre>
+
+Methods:
+<pre>  void DetectFrontalFaces(const ImgBgr& img, std::vector<Rect>* out)
+  void DetectLeftProfileFaces(const ImgBgr& img, std::vector<Rect>* out)
+  void DetectRightProfileFaces(const ImgBgr& img, std::vector<Rect>* out)
+  void DetectAllFaces(const ImgBgr& img, std::vector<Rect>* frontal, std::vector<Rect>* left, std::vector<Rect>* right)
+</pre>
+
+Detects faces in an image using the implementation in the OpenCV library.
+Uses hardcoded .xml files for frontal and profile face detection.  These files
+must be either in the directory of the executable or the Blepo directory of
+the code used in compiling the executable.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Canny edge detection</h2>
+</table>
+
+<pre>  void Canny(const ImgGray& img, ImgBinary* out, float sigma, float perc, float ratio);
+</pre>
+
+<p>
+Performs Canny edge detection, described in the following paper:<br>
+<ul><li>J. Canny, A computational approach to edge detection, <i>IEEE Transactions on Pattern Analysis
+and Machine Intelligence</i>, 8(6):679-698, 1986</li></ul>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Mean shift color segmentation</h2>
+</table>
+
+<pre>  void MeanShiftSegmentation(const ImgBgr& img, ImgBgr* out);
+  void MeanShiftSegmentation(const ImgBgr& img, ImgBgr* out, const MeanShiftSegmentationParams& params);
+</pre>
+
+<p>
+Performs mean shift color segmentation, described in the following paper:<br>
+<ul><li>D. Comaniciu and P. Meer, Mean Shift: A Robust Approach toward Feature Space Analysis, 
+<i>IEEE Transactions on Pattern Analysis and Machine Intelligence</i>, 24(5):603-619, 2002.</ul>
+
+<p>
+Parameters may be passed to the algorithm by passing a struct as 
+an optional third argument:
+
+<p>
+<pre>  struct MeanShiftSegmentationParams:
+    int sigma_spatial       spatial radius of the mean shift window (default: 7)
+    float sigma_color       range radius of the mean shift window (default: 6.5)
+    int minregion           minimum density of a region; regions smaller than this will be pruned (default: 20)
+    int speedup             speedup level (0: slowest, 1: medium, 2: fastest) (default: 2)
+</pre>
+
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Graph-based color segmentation</h2>
+</table>
+
+<pre>  void FHGraphSegmentation(const ImgBgr& img, float sigma, float c, int min_size, ImgBgr *out);
+</pre>
+
+<p>
+Performs graph-based color segmentation, described in the following paper:<br>
+<ul><li>Pedro F. Felzenszwalb and Daniel P. Huttenlocher, <i>International Journal of Computer Vision</i>, 
+59(2), September 2004.</ul>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Watershed segmentation</h2>
+</table>
+
+<pre>  void WatershedSegmentation(const ImgGray& img, ImgInt* labels, bool marker_based);
+</pre>
+
+<p>
+Performs watershed segmentation, described in the following paper:<br>
+<ul><li>L. Vincent and P. Soille, Watersheds in digital spaces: An efficient algorithm
+                    based on immersion simulations, 
+<i>IEEE Transactions on Pattern Analysis and Machine Intelligence</i>, 13(6):583-598, 1991.</ul>
+This implementation is a slightly simplified variation of the original algorithm.
+.
+<p>
+You should pass in a gradient magnitude image as <tt>img</tt>.
+If <tt>marker_based</tt> is true, then new catchment basins will only be declared in regions
+                   where <tt>img</tt> is 0.  If false, then new catchment basins will be declared
+                   in all local minima (likely leading to oversegmentation).
+                   To use marker-based, simply set <tt>img</tt> to zero wherever you would like to set a marker.
+
+
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Elliptical head tracking</h2>
+</table>
+
+<pre>  class EllipticalHeadTracker
+</pre>
+
+<p>
+Tracks a person's head using an elliptical model.  The algorithm is described in
+the following paper:<br>
+<ul><li>S. Birchfield, Elliptical Head Tracking Using Intensity Gradients and Color Histograms,
+<i>IEEE Conference on Computer Vision and Pattern Recognition</i>, 1998.</ul>
+
+<p>
+Example:
+
+<pre>  ImgBgr img;
+  EllipticalHeadTracker::EllipseState state(58, 47, 21);
+  EllipticalHeadTracker	eht;
+  eht.Init(img, state);
+  while (1)
+  {
+    img.Load( ... );
+    state = eht.Track(img);
+  }
+</pre>
+
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Camera calibration</h2>
+</table>
+
+<pre>  void CalibrateCamera(const std::vector< CalibrationPointArr >& pts, const Size& img_size, CalibrationParams* out);
+</pre>
+
+<p>
+Given correspondence between a number of world and image coordinates, in a number
+of images, computes the internal calibration parameters of the camera.  Uses the 
+implementation in the OpenCV library.  <tt>pts</tt> is an array of correspondences
+for each image.
+
+The data structures are as follows:
+<pre>  struct CalibrationPoint
+  {
+    double x, y, z;  // world coordinates
+    double u, v;     // image coordinates
+  };
+  struct CalibrationParams
+  {
+    MatDbl intrinsic_matrix;            // intrinsic matrix
+    Array< double > distortion_coeffs;  // radial and tangential lens distortion
+  };
+  typedef Array< CalibrationPoint > CalibrationPointArr;
+</pre>
+
+<p>
+Some helper functions to make it easy to accomplish the world to image correspondence
+are the following:
+<pre>  typedef Array< CvPoint2D32f > Cvptarr;
+  bool FindChessboardCorners(const ImgGray& img, const Size& grid_dims, Cvptarr* pts);
+  void DrawChessboardCorners(ImgBgr* img, const Size& grid_dims, bool all_found, const Cvptarr& pts);
+  void TransformChessboardPoints(const Cvptarr& pts, const Size& grid_dims, CalibrationPointArr* cpts);
+</pre>
+To use these functions, print a calibration target consisting of a chessboard pattern
+(such as <tt>calibration_target.pdf</tt> in the <tt>images</tt> directory).  Capture
+several images of the chessboard at various angles, running <tt>FindChessboardCorners</tt>.
+Whenever all the corners of the grid are found, the function will output true, and you
+should save the coordinates in a vector.  When the corners in several images have
+been found, call <tt>TransformChessboardPoints</tt>.  Then calibrate.
+
+<p>
+Example (assuming an array of images):
+<pre>  const Size grid_dims(8, 6);  // number of corners in chessboard pattern (horiz. and vert.)
+  Cvptarr pts;
+  CalibrationPointArr cpts;
+  std::vector< CalibrationPointArr > all_pts;
+  CalibrationParams params;
+  for (int i = 0 ; i < num_images ; i++)
+  {
+    if ( FindChessboardCorners(images[i], grid_dims, &pts) )
+    {
+      TransformChessboardPoints(pts, grid_dims, &cpts);
+      all_pts.push_back( cpts );
+    }
+  }
+  CalibrateCamera(all_pts, Size(img.Width(), img.Height()), &params);
+</pre>
+
+<p>
+<hr>
+<a name="matrix_ops">
+<center><h2><u>Matrix operations</u></h2></center>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Initialization</h2>
+</table>
+
+<pre>  void Eye(int dim, MatDbl* mat)                   // identity matrix
+  void Eye(int dim, MatFlt* mat)                   
+  void Rand(int width, int height, MatDbl* out)    // drawn from uniform random distribution in the range [0,1)
+  void Rand(int width, int height, MatFlt* out)    
+</pre>
+
+<p>
+Resets a matrix to the desired size and initializes its values.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Diag</h2>
+</table>
+
+<pre>  void Diag(const MatDbl& mat, MatDbl* out)
+  void Diag(const MatFlt& mat, MatFlt* out)   *** need to implement
+</pre>
+
+<p>
+This function serves two purposes:
+<ul>
+<li>If the input is a vector (i.e., one dimension is equal to 1), then the output is a square
+matrix with its diagonal elements set to those of the vector, and all off-diagonal elements zero.
+<li>If the input is a matrix (i.e., both dimensions are greater than 1), then the output is
+a vector whose elements are copied from the diagonal of the input.
+</ul>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Set</h2>
+</table>
+
+<pre>  void Set(MatDbl* out, double val)
+  void Set(MatFlt* out, double val)
+</pre>
+
+<p>
+Sets all the elements of a matrix to a constant value.
+
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Convert</h2>
+</table>
+
+<pre>  void Convert(const MatDbl& src, MatFlt* dst)
+  void Convert(const MatFlt& src, MatDbl* dst)
+</pre>
+
+<p>
+Converts a double-precision to a single-precision matrix, or vice versa.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>IsSameSize</h2>
+</table>
+
+<pre>  bool IsSameSize(const MatDbl& src1, const MatDbl& src2)  
+  bool IsSameSize(const MatFlt& src1, const MatFlt& src2)  
+</pre>
+
+<p>
+Returns whether the dimensions of the matrices are the same.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Similar</h2>
+</table>
+
+<pre>  bool Similar(const MatDbl& src1, const MatDbl& src2, double tolerance)
+  bool Similar(const MatFlt& src1, const MatFlt& src2, float tolerance)  *** need to implement
+</pre>
+
+<p>
+Returns whether all the elements of the two matrices are within <tt>tolerance</tt>.  
+The two matrices must be of the same size.
+
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Arithmetic operations</h2>
+</table>
+
+<pre>  void Add(const MatDbl& src1, const MatDbl& src2, MatDbl* dst)
+  void Add(const MatDbl& src, double val, MatDbl* dst)
+  void Subtract(const MatDbl& src1, const MatDbl& src2, MatDbl* dst)
+  void Subtract(const MatDbl& src, double val, MatDbl* dst)
+  void MatrixMultiply(const MatDbl& src1, const MatDbl& src2, MatDbl* dst)    // matrix multiplication
+  void Multiply(const MatDbl& src, double val, MatDbl* dst)
+  void MultiplyElements(const MatDbl& src1, const MatDbl& src2, MatDbl* dst)  // element-wise multiplication
+  void Negate(const MatDbl& src, MatDbl* dst)                                 // multiply by -1
+</pre>
+
+<p>
+Add, subtract, or multiply either two matrices, or a matrix and a constant value.
+
+<p>
+Notes:
+<ul>
+<li>With the exception of matrix multiplication, "Inplace" is supported, so 
+  <tt>dst</tt> may point to either of the inputs.
+<li>**** need to rename Multiply stuff in code;  need to be consistent with 'src' and 'dst' for
+  images and matrices; need to check for inplace in matrix multiply.
+  <li> **** need to implement float versions
+</ul>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Sum</h2>
+</table>
+
+<pre>  double Sum(const MatDbl& src)
+  float Sum(const MatFlt& src)
+</pre>
+
+<p>
+Returns the sum of the elements in a matrix.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Transpose</h2>
+</table>
+
+<pre>  void Transpose(const MatDbl& src, MatDbl* dst)
+  void Transpose(const MatFlt& src, MatFlt* dst)
+</pre>
+
+<p>
+Computes the transpose of a matrix.  "Inplace" operation is supported but is efficient only
+for vectors or square matrices; non-square matrices require memory allocation / deallocation 
+of a temporary matrix, along with an extra copy.
+
+** Need to implement inplace.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Convenient but inefficient functions</h2>
+</table>
+
+<pre>  MatDbl Diag(const MatDbl& mat)
+  MatDbl Transpose(const MatDbl& mat)
+  MatDbl operator+(const MatDbl& src1, const MatDbl& src2)
+  MatFlt operator+(const MatFlt& src1, const MatFlt& src2)
+  MatDbl operator*(const MatDbl& src1, const MatDbl& src2)
+  MatFlt operator*(const MatFlt& src1, const MatFlt& src2)
+  MatDbl operator-(const MatDbl& src1, const MatDbl& src2)
+  MatDbl operator-(const MatDbl& src)
+  MatDbl Eye(int dim)
+  MatDbl Inverse(const MatDbl& mat)
+</pre>
+
+<p>
+To assist rapid prototyping, these functions enable matrix operations to be combined 
+with a more natural syntax, e.g., <tt>b = a * c + Transpose(d) - Inverse(e)</tt>.  Due to their 
+use of temporary matrices and "return by value", they should not be used whenever efficiency 
+is a concern.
+
+<p>
+<hr>
+<a name="linear_algebra">
+<center><h2><u>Linear Algebra</u></h2></center>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Norm</h2>
+</table>
+
+<pre>  double Norm(const MatDbl& src);
+</pre>
+
+<p>
+Returns the L2 (Euclidean) norm of a vector.
+
+*** Only defined for vectors (can we define it for matrices, too?)
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Determinant</h2>
+</table>
+
+<pre>  double Determinant(const MatDbl& mat);
+</pre>
+
+<p>
+Returns the determinant of a square matrix.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Inverse</h2>
+</table>
+
+<pre>  void Inverse(const MatDbl& mat, MatDbl* out);
+</pre>
+
+<p>
+Computes the inverse of a square matrix.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Eigenvalues and eigenvectors</h2>
+</table>
+
+<pre>  void EigenSymm(const MatDbl& mat, MatDbl* eigenvalues);
+  void EigenSymm(const MatDbl& mat, MatDbl* eigenvalues, MatDbl* eigenvectors);
+</pre>
+
+<p>
+Computes the eigenvalues (and eigenvectors) of a square, symmetric matrix.
+The upper triangular elements of the input matrix are ignored.  The eigenvalues
+are stored in a vector, while the eigenvectors are stored as columns of a matrix.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>SolveLinear</h2>
+</table>
+
+<pre>  void SolveLinear(const MatDbl& a, const MatDbl& b, MatDbl* x);
+</pre>
+
+<p>
+Solves the linear equation <tt>Ax = b</tt>, where <tt>A</tt> is a matrix and <tt>x</tt> and
+<tt>b</tt> are vectors.  If the system of equations is overdetermined (the number
+of rows in <tt>A</tt> is greater than the number of columns), then the least squares
+solution is produced.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Singular value decomposition</h2>
+</table>
+
+<pre>  void Svd(const MatDbl& mat, MatDbl* u, MatDbl* s, MatDbl* v);
+</pre>
+
+<p>
+Computes the singular value decomposition (SVD) of a matrix.  After calling this
+function, the input matrix can be reconstructed by <tt>u * Diag(s) * Transpose(v)</tt>.
+The matrices <tt>u</tt> and <tt>v</tt> contain the left and right singular values,
+respectively, in their columns.  The vector <tt>s</tt> contains the singular values.
+If the input matrix has <tt>n</tt> columns and <tt>m</tt> rows, then the output dimensions are
+as follows:
+<ul>
+<li><tt>u</tt>:  <tt>n</tt> columns and <tt>m</tt> rows
+<li><tt>s</tt>:  <tt>1</tt> column  and <tt>n</tt> rows
+<li><tt>v</tt>:  <tt>n</tt> columns and <tt>n</tt> rows
+</ul>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>LU decomposition</h2>
+</table>
+
+<pre>  void Lu(const MatDbl& mat, MatDbl* el, MatDbl* u, MatDbl* p);
+</pre>
+
+<p>
+Computes the LU decomposition of a matrix.  After calling this
+function, <tt>el * u</tt> should equal (subject to round-off error)
+<tt>p</tt> times the input matrix.  <tt>el</tt> is lower triangular, 
+<tt>u</tt> is upper triangular, and <tt>p</tt> is a permutation matrix.
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>QR factorization</h2>
+</table>
+
+<pre>  void Qr(const MatDbl& mat, MatDbl* q, MatDbl* r);
+</pre>
+
+<p>
+Computes the QR factorization of a matrix.  After calling this
+function, the input matrix can be reconstructed by <tt>q * r</tt>.
+
+<p>
+<hr>
+<a name="figure">
+<center><h2><u>Figure</u></h2></center>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>Figure</h2>
+</table>
+
+<p>
+The <tt>Figure</tt> class is used to display an image in a window on the screen.
+
+<p><b><u>Members</u></b>
+
+<pre>    <b>Constructor / destructor / etc.</b>  
+      Figure()                                                  create a figure with automatic title and placement
+      Figure(const char* title, int x, int y, bool permanent)   create a figure manually:
+                                                                   title:  string that appears in the title bar
+                                                                   x, y:   initial screen coordinates of the window
+                                                                   permanent:  if false, then window is destroyed when 
+                                                                               destructor is called (default: true)
+      ~Figure()
+    <b>Drawing</b>  
+      void Draw(const ImgX& img)                                display an image in the window
+    <b>Mouse input</b>
+      void GrabMouseClicks(int n, Array&lt;Point&gt;* points)       wait for user to click 'n' times with the mouse;
+                                                                    return points in image coordinates
+      Point GrabMouseClick()                                    wait for user to click once
+      Rect GrabRect()                                           wait for user to click-and-drag, specifying a rectangle
+      bool TestMouseClick(CPoint* pt = NULL)                    grabs mouse click without waiting; returns true if clicked
+    <b>Window functions</b>
+      void SetPosition(int x, int y)                            set position of window in screen coordinates
+      void SetSize(int width, int height)                       set size of window
+      Point GetPosition() const                                 get position
+      Size GetSize() const                                      get size
+</pre>
+
+<p>
+Notes:
+<ul>
+<li>The default behavior of the figure is to be permanent.  That is, the destructor
+does nothing, and the window is killed only when the application exits.  This behavior
+enables easy visualization of images for research purposes.  Set <tt>permanent = false</tt>
+in the constructor to override this behavior.
+<li>Do not try to create a global <tt>Figure</tt> object.  Instead, create a
+static object if rapid visualization is required.
+<li>The window is automatically resized whenever the <tt>Draw</tt> method is called
+with an image whose size is different from the previous call.
+</ul>
+
+<p>
+<hr>
+<a name="capture">
+<center><h2><u>Capture</u></h2></center>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>CaptureDirectShow</h2>
+</table>
+
+<p>
+The <tt>CaptureDirectShow</tt> class is used to capture images from a camera with a 
+DirectShow driver.  It has  been tested with the following devices:<ul>
+  <li>Logitech QuickCam Pro 4000 USB webcam</li>
+  <li>Logitech QuickCam Pro 5000 USB webcam</li>
+  <li>Logitech QuickCam Communicate MP Plus webcam</li>
+  </a>
+  <li>VideoHome GrabBeeX-light USB analog framegrabber</li>
+  </ul>
+
+<p><b><u>Members</u></b>
+
+<pre>    <b>List devices</b>  
+      // Fills the vector with the human-readable names of all available devices.
+      // Use the index of the vector for selecting an input camera in BuildGraph.
+      static void GetVideoInputDevices(std::vector<CString>* friendly_names)
+
+    <b>Constructor / destructor / etc.</b>  
+      CaptureDirectShow()           initializes DirectShow
+      ~CaptureDirectShow()          automatically destroys the graph and uninitializes DirectShow
+
+    <b>Build / tear down DirectShow capture graph</b>  
+      void BuildGraph(int width, int height, int camera_index = 0)
+      void BuildGraph(int camera_index = 0)
+      void TearDownGraph() 
+
+    <b>Graph control</b>  
+      void Start()                  start capturing images at the default frame rate
+      void Stop()                   stop capturing
+      void Pause()                  pause capturing
+
+    <b>Query graph state</b>  
+      bool IsRunning() const        returns true if capturing images (i.e., Start was called)
+      bool IsPaused() const         returns true if paused
+
+    <b>Get image</b>  
+      // Get the latest frame that has been grabbed. 'timeout' is in 
+      // milliseconds (-1 for infinite, 0 for immediate return).
+      // Returns true if a new frame is available since the last time this function
+      // was called, false otherwise.
+      bool GetLatestImage(ImgBgr* out, int timeout = 0)
+</pre>
+
+<p>
+To use this class, first instantiate the object and call <tt>BuildGraph</tt>.  
+Then, call <tt>Start</tt> to cause frames to be grabbed continuously at the frame rate.
+Once the graph is running, then call <tt>GetLatestImage</tt> repeatedly to get
+access to the latest image frame.  There is no need to stop the capture or tear down the graph
+-- the destructor takes care of these automatically.
+
+<p>
+Example:
+<pre>  ImgBgr img;
+  CaptureDirectShow cap;
+  cap.BuildGraph();             // use default camera
+  cap.Start();
+  while (1)
+  {
+    bool new_image = cap.GetLatestImage(&img);
+    if (new_image)
+    {
+      // process image
+    }
+  }
+</pre>
+
+<p>
+<table>
+<tr bgcolor=#04fefc>
+<td width=1000><h2>CaptureIEEE1394</h2>
+</table>
+
+<p>
+The <tt>CaptureIEEE1394</tt> class is used to capture images from an IEEE 1394
+(Firewire) camera.  It uses the 
+<a href="http://www.cs.cmu.edu/~iwan/1394/">CMU 1394 Digital Camera Driver</a>
+and should therefore work with any OHCI-compliant camera
+but NOT with DV cameras. 
+  
+<p>
+Note:  Before using this class, you must first set the driver to the CMU driver.  See
+'Getting Started'.
+
+<p><b><u>Members</u></b>
+
+<pre>    <b>Constructor / destructor / etc.</b>  
+      CaptureIEEE1394()           
+      ~CaptureIEEE1394()          
+
+    <b>Camera selection</b>  
+      void SelectCamera(int index)  select a camera
+
+    <b>Control</b>  
+      void Start()                  start capturing images at the default frame rate
+      void Stop()                   stop capturing
+      void Pause()                  pause capturing
+
+    <b>Get image</b>  
+      // Get the latest frame that has been grabbed. 'timeout' is in 
+      // milliseconds (-1 for infinite, 0 for immediate return).
+      // Returns true if a new frame is available since the last time this function
+      // was called, false otherwise.
+      bool GetLatestImage(ImgBgr* out, int timeout = 0)
+</pre>
+
+<p>
+To use this class, first instantiate the object, then call <tt>Start</tt> 
+to cause frames to be grabbed continuously at the frame rate.
+Once the graph is running, then call <tt>GetLatestImage</tt> repeatedly to get
+access to the latest image frame.  There is no need to stop the capture or disconnect
+the camera -- the destructor takes care of these automatically.
+
+<p>
+*** This class is functional for basic image capture, but it needs some work.
+Specifically, the constructor should not connect to the camera (that should be
+done by a separate Init function).
